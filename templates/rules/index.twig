@@ -4,15 +4,14 @@
 
 {% block content %}
 {% if saved %}
-<div class="notice notice-ok" role="status">Rule saved. It's watching now.</div>
+<div class="notice notice-ok" role="status">Rule saved.</div>
 {% endif %}
 
 <div class="panel-head page-head">
     <div>
         <h1>Rules</h1>
-        <p class="lede">Tell the app what to watch. It does the counting, you do the deciding.</p>
     </div>
-    <a class="btn btn-primary" href="/rules/new">+ New rule</a>
+    <a class="btn btn-primary" href="/rules/new">New rule</a>
 </div>
 
 {% if rules %}
@@ -34,7 +33,7 @@
                 </td>
                 <td>
                     {% if r.is_active %}
-                        <span class="chip chip-on">watching</span>
+                        <span class="chip chip-on">active</span>
                     {% else %}
                         <span class="chip">paused</span>
                     {% endif %}
@@ -45,7 +44,7 @@
                     </form>
                     <a class="btn btn-quiet" href="/rules/{{ r.id }}/edit">Edit</a>
                     <form method="post" action="/rules/{{ r.id }}/delete" class="inline"
-                          onsubmit="return confirm('Delete “{{ r.name }}”? Its alerts go too.')">
+                          onsubmit="return confirm('Delete {{ r.name }}?')">
                         <button class="btn btn-danger-quiet" type="submit">Delete</button>
                     </form>
                 </td>
@@ -56,9 +55,8 @@
 </div>
 {% else %}
 <div class="panel empty tall">
-    <p><strong>No rules yet.</strong></p>
-    <p>Your budget is currently a mystery.</p>
-    <p class="empty-cta"><a class="btn btn-primary" href="/rules/new">Build your first rule</a></p>
+    <p>No rules yet.</p>
+    <p class="empty-cta"><a class="btn btn-primary" href="/rules/new">New rule</a></p>
 </div>
 {% endif %}
 {% endblock %}

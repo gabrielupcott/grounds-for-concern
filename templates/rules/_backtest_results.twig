@@ -1,8 +1,8 @@
 {% if result.episode_count == 0 %}
-    <p class="backtest-verdict ok">No — it would have stayed quiet for 90 days.</p>
+    <p class="backtest-verdict ok">Would not have fired in the last 90 days.</p>
 {% else %}
     <p class="backtest-verdict">
-        It would have fired <strong>{{ result.episode_count }} time{{ result.episode_count == 1 ? '' : 's' }}</strong>
+        Would have fired <strong>{{ result.episode_count }} time{{ result.episode_count == 1 ? '' : 's' }}</strong>
         in the last 90 days:
     </p>
     <ul class="episode-list">

@@ -126,7 +126,7 @@
                     data.errors.map(e => e.replace(/</g, '&lt;')).join(' ') + '</p>';
             }
         } catch {
-            backtestEl.innerHTML = '<p class="notice notice-warn">Could not run the backtest — is the rule engine running?</p>';
+            backtestEl.innerHTML = '<p class="notice notice-warn">Backtest failed.</p>';
         } finally {
             backtestBtn.disabled = false;
             backtestBtn.textContent = 'Run backtest';

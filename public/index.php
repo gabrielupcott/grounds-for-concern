@@ -196,17 +196,17 @@ try {
             $date = (string) ($_POST['date'] ?? date('Y-m-d'));
 
             if ($merchant === '') {
-                $errors['merchant'] = 'Who got the money?';
+                $errors['merchant'] = 'Merchant is required.';
             } elseif (mb_strlen($merchant) > 120) {
-                $errors['merchant'] = 'Merchant names max out at 120 characters.';
+                $errors['merchant'] = 'Merchant must be 120 characters or fewer.';
             }
             if ($amount <= 0) {
-                $errors['amount'] = 'Amount must be more than zero.';
+                $errors['amount'] = 'Amount must be greater than zero.';
             } elseif ($amount > 10000) {
-                $errors['amount'] = 'Let’s keep individual purchases under $10,000.';
+                $errors['amount'] = 'Amount is too large.';
             }
             if (!in_array($category, TransactionRepository::CATEGORIES, true)) {
-                $errors['category'] = 'Pick a category.';
+                $errors['category'] = 'Select a category.';
             }
             // The "!" resets unparsed components to zero — without it,
             // createFromFormat fills the time with *now*, and today reads as
@@ -214,11 +214,11 @@ try {
             $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
             $today = new DateTimeImmutable('today');
             if (!$dt || $dt->format('Y-m-d') !== $date) {
-                $errors['date'] = 'That date doesn’t look right.';
+                $errors['date'] = 'Invalid date.';
             } elseif ($dt > $today) {
-                $errors['date'] = 'Can’t log purchases from the future.';
+                $errors['date'] = 'Date cannot be in the future.';
             } elseif ($dt < $today->modify('-365 days')) {
-                $errors['date'] = 'Keep it within the last year.';
+                $errors['date'] = 'Date is too far in the past.';
             }
 
             if ($errors) {
@@ -242,7 +242,7 @@ try {
             $txns->add($date, $merchant, $category, (int) round($amount * 100));
             $_SESSION['flash'][] = [
                 'type' => 'ok',
-                'text' => sprintf('Logged $%s at %s.', number_format($amount, 2), $merchant),
+                'text' => sprintf('Added $%s at %s.', number_format($amount, 2), $merchant),
             ];
 
             // The moment of truth: evaluate every active rule over its window.
@@ -265,7 +265,7 @@ try {
                             $_SESSION['flash'][] = [
                                 'type' => 'fire',
                                 'text' => sprintf(
-                                    '%s fired — $%s in the last %d days. See Alerts.',
+                                    '%s fired: $%s over %d days. See Alerts.',
                                     $rule['name'],
                                     number_format($verdict['window_total_cents'] / 100, 2),
                                     $def['window_days']
@@ -277,7 +277,7 @@ try {
             } catch (Throwable $e) {
                 $_SESSION['flash'][] = [
                     'type' => 'warn',
-                    'text' => 'Purchase saved, but the rule engine is unreachable — rules weren’t evaluated.',
+                    'text' => 'Saved, but the rule engine is unreachable. Rules were not evaluated.',
                 ];
             }
 

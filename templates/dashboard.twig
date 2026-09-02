@@ -9,7 +9,7 @@
 
 <section class="card-row">
     <div class="card">
-        <h2 class="card-label">Coffee, last 7 days</h2>
+        <h2 class="card-label">Coffee (7 days)</h2>
         <p class="card-value">${{ coffee7.total_cents|money }}</p>
         <p class="card-sub">{{ coffee7.count }} purchase{{ coffee7.count == 1 ? '' : 's' }}</p>
         <div class="meter" role="img"
@@ -17,32 +17,30 @@
             <div class="meter-fill {% if coffee7.total_cents > 6000 %}is-over{% endif %}"
                  style="width: {{ min(coffee7.total_cents / 6000 * 100, 100) }}%"></div>
         </div>
-        <p class="card-sub muted">vs. a $60 week</p>
     </div>
 
     <div class="card">
-        <h2 class="card-label">Coffee, last 30 days</h2>
+        <h2 class="card-label">Coffee (30 days)</h2>
         <p class="card-value">${{ coffee30.total_cents|money }}</p>
         <p class="card-sub">{{ coffee30.count }} purchase{{ coffee30.count == 1 ? '' : 's' }}</p>
     </div>
 
     <div class="card">
-        <h2 class="card-label">All spending, last 7 days</h2>
+        <h2 class="card-label">Spending (7 days)</h2>
         <p class="card-value">${{ weekTotal|money }}</p>
-        <p class="card-sub">every category</p>
     </div>
 </section>
 
 <section class="dash-grid">
     <div class="panel">
         <div class="panel-head">
-            <h2>Log a purchase</h2>
+            <h2>Add purchase</h2>
         </div>
         <form method="post" action="/transactions/add" class="log-form">
             <label class="field">
                 <span class="field-label">Merchant</span>
                 <input type="text" name="merchant" list="log-merchants" maxlength="120"
-                       value="{{ form_submitted.merchant ?? '' }}" placeholder="e.g. Second Cup"
+                       value="{{ form_submitted.merchant ?? '' }}" placeholder="Second Cup"
                        class="{{ form_errors.merchant is defined ? 'input-error' }}" required>
                 {% if form_errors.merchant is defined %}<span class="field-error">{{ form_errors.merchant }}</span>{% endif %}
             </label>
@@ -68,18 +66,17 @@
                        class="{{ form_errors.date is defined ? 'input-error' }}">
                 {% if form_errors.date is defined %}<span class="field-error">{{ form_errors.date }}</span>{% endif %}
             </label>
-            <button type="submit" class="btn btn-primary log-submit">Log it</button>
+            <button type="submit" class="btn btn-primary log-submit">Add</button>
         </form>
         <datalist id="log-merchants">
             {% for m in merchants %}<option value="{{ m }}"></option>{% endfor %}
         </datalist>
-        <p class="muted">Logging a purchase immediately evaluates every active rule.</p>
     </div>
 
     <div class="panel">
     <div class="panel-head">
-        <h2>Recent purchases</h2>
-        <a class="btn btn-primary" href="/rules">Build a rule &rarr;</a>
+        <h2>Recent</h2>
+        <a class="btn" href="/rules">New rule</a>
     </div>
 
     {% if recent %}
@@ -105,8 +102,7 @@
     </table>
     {% else %}
     <div class="empty">
-        <p><strong>No purchases yet.</strong></p>
-        <p>Log one and the dashboard fills in.</p>
+        <p>No purchases yet.</p>
     </div>
     {% endif %}
     </div>

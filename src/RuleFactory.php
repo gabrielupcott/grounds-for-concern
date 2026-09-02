@@ -30,19 +30,19 @@ final class RuleFactory
 
         $name = trim((string) ($post['name'] ?? ''));
         if ($name === '') {
-            $errors['name'] = 'Give the rule a name.';
+            $errors['name'] = 'Name is required.';
         } elseif (mb_strlen($name) > 120) {
-            $errors['name'] = 'Rule names max out at 120 characters.';
+            $errors['name'] = 'Name must be 120 characters or fewer.';
         }
 
         $windowDays = (int) ($post['window_days'] ?? 0);
         if (!in_array($windowDays, self::WINDOWS, true)) {
-            $errors['window_days'] = 'Pick a window length.';
+            $errors['window_days'] = 'Select a window.';
         }
 
         $match = (string) ($post['group_match'] ?? '');
         if ($match !== 'any' && $match !== 'all') {
-            $errors['group_match'] = 'Choose whether conditions must all match or any can match.';
+            $errors['group_match'] = 'Select a match mode.';
         }
 
         // Conditions: rows of parallel arrays; completely empty rows are skipped
@@ -62,46 +62,46 @@ final class RuleFactory
             }
 
             if (!in_array($field, self::FIELDS, true)) {
-                $errors["cond_$i"] = 'Pick what to watch (category or merchant).';
+                $errors["cond_$i"] = 'Select a field.';
                 continue;
             }
             if (!in_array($operator, self::OPERATORS, true)) {
-                $errors["cond_$i"] = 'Pick a comparison.';
+                $errors["cond_$i"] = 'Select an operator.';
                 continue;
             }
             if ($value === '') {
-                $errors["cond_$i"] = 'Fill in a value, or remove this condition.';
+                $errors["cond_$i"] = 'Value is required.';
                 continue;
             }
             if (mb_strlen($value) > 120) {
-                $errors["cond_$i"] = 'Values max out at 120 characters.';
+                $errors["cond_$i"] = 'Value must be 120 characters or fewer.';
                 continue;
             }
             $conditions[] = ['field' => $field, 'operator' => $operator, 'value' => $value];
         }
 
         if ($conditions === [] && !isset($errors['cond_0'])) {
-            $errors['cond_0'] = 'A rule needs at least one condition.';
+            $errors['cond_0'] = 'Add at least one condition.';
         }
 
         $metric = (string) ($post['threshold_metric'] ?? '');
         if (!in_array($metric, self::METRICS, true)) {
-            $errors['threshold_metric'] = 'Pick what to measure.';
+            $errors['threshold_metric'] = 'Select a metric.';
         }
 
         $thresholdOp = (string) ($post['threshold_operator'] ?? '');
         if (!in_array($thresholdOp, self::THRESHOLD_OPS, true)) {
-            $errors['threshold_operator'] = 'Pick a comparison.';
+            $errors['threshold_operator'] = 'Select an operator.';
         }
 
         $rawValue = str_replace(['$', ','], '', (string) ($post['threshold_value'] ?? ''));
         $thresholdValue = $rawValue === '' ? null : round((float) $rawValue, 2);
         if ($thresholdValue === null || $thresholdValue <= 0) {
-            $errors['threshold_value'] = 'Enter an amount above zero.';
+            $errors['threshold_value'] = 'Enter an amount greater than zero.';
         } elseif ($metric === 'count' && floor($thresholdValue) != $thresholdValue) {
-            $errors['threshold_value'] = 'Purchase counts must be whole numbers.';
+            $errors['threshold_value'] = 'Count must be a whole number.';
         } elseif ($thresholdValue > 100000) {
-            $errors['threshold_value'] = 'Let’s keep this under $100,000.';
+            $errors['threshold_value'] = 'Amount is too large.';
         }
 
         if ($errors) {
