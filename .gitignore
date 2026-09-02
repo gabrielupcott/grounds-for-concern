@@ -1,0 +1,7 @@
+vendor/
+config.php
+.env
+composer.phar
+*.log
+Thumbs.db
+.DS_Store
