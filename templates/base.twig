@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Grounds for Concern{% endblock %}</title>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="brand" href="/">
+            <span class="brand-mark" aria-hidden="true">&#9749;</span>
+            <span class="brand-name">Grounds <em>for</em> Concern</span>
+        </a>
+        <nav class="site-nav">
+            <a href="/" {% if active_nav == 'dashboard' %}class="is-active"{% endif %}>Dashboard</a>
+            <a href="/rules" {% if active_nav == 'rules' %}class="is-active"{% endif %}>Rules</a>
+            <a href="/alerts" {% if active_nav == 'alerts' %}class="is-active"{% endif %}>
+                Alerts
+                {% if unseen_alerts > 0 %}<span class="badge">{{ unseen_alerts }}</span>{% endif %}
+            </a>
+        </nav>
+    </div>
+</header>
+
+<main class="wrap">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">A tiny budget watcher. PHP + Twig &middot; Go rule engine &middot; MySQL.</div>
+</footer>
+</body>
+</html>
