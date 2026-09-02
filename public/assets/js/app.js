@@ -11,6 +11,7 @@
     const backtestUrl = form.dataset.backtestUrl;
 
     const sentenceEl = document.getElementById('preview-sentence');
+    const nowEl = document.getElementById('preview-now');
     const errorsEl = document.getElementById('preview-errors');
     const backtestBtn = document.getElementById('backtest-btn');
     const backtestEl = document.getElementById('backtest-results');
@@ -94,8 +95,20 @@
                 sentenceEl.textContent = data.sentence;
                 errorsEl.hidden = true;
                 errorsEl.replaceChildren();
+                if (data.now) {
+                    const n = data.now;
+                    let line = 'Now: $' + (n.total_cents / 100).toFixed(2) + ' · ' +
+                        n.count + (n.count === 1 ? ' purchase' : ' purchases');
+                    line += n.triggered ? ' · over' : (n.gap ? ' · ' + n.gap + ' from firing' : '');
+                    nowEl.textContent = line;
+                    nowEl.classList.toggle('is-over', n.triggered);
+                    nowEl.hidden = false;
+                } else {
+                    nowEl.hidden = true;
+                }
             } else {
                 sentenceEl.textContent = 'Alert me when…';
+                nowEl.hidden = true;
                 errorsEl.hidden = false;
                 errorsEl.replaceChildren(...data.errors.map(e => {
                     const li = document.createElement('li');

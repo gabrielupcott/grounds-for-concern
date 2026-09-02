@@ -157,7 +157,40 @@ try {
             header('Content-Type: application/json');
             try {
                 $definition = RuleFactory::fromForm($_POST);
-                echo json_encode(['ok' => true, 'sentence' => Sentence::render($definition)]);
+                $payload = ['ok' => true, 'sentence' => Sentence::render($definition)];
+
+                // Live match count: what the rule sees right now, over its
+                // window, as of today. Sentence = meaning; this = present;
+                // backtest = past.
+                try {
+                    $today = new DateTimeImmutable('today');
+                    $windowStart = $today
+                        ->modify(sprintf('-%d days', $definition['window_days'] - 1))
+                        ->format('Y-m-d');
+                    $verdict = $engine->evaluate($definition, $txns->sinceForEngine($windowStart), $today->format('Y-m-d'));
+
+                    $gap = null;
+                    if (!$verdict['triggered']) {
+                        if ($definition['threshold']['metric'] === 'total') {
+                            $gapCents = max((int) round($definition['threshold']['value'] * 100) - (int) $verdict['window_total_cents'], 0);
+                            $gap = '$' . number_format($gapCents / 100, 2);
+                        } else {
+                            $gapN = max((int) ceil($definition['threshold']['value']) - (int) $verdict['transaction_count'], 0);
+                            $gap = $gapN . ' purchase' . ($gapN === 1 ? '' : 's');
+                        }
+                    }
+
+                    $payload['now'] = [
+                        'total_cents' => (int) $verdict['window_total_cents'],
+                        'count' => (int) $verdict['transaction_count'],
+                        'triggered' => (bool) $verdict['triggered'],
+                        'gap' => $gap,
+                    ];
+                } catch (Throwable $e) {
+                    // The sentence alone is still useful without the count.
+                }
+
+                echo json_encode($payload);
             } catch (RuleValidationException $e) {
                 echo json_encode(['ok' => false, 'errors' => array_values($e->errors)]);
             }
