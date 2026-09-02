@@ -3,6 +3,10 @@
 {% block title %}Dashboard — Grounds for Concern{% endblock %}
 
 {% block content %}
+{% for f in flash %}
+<div class="notice notice-{{ f.type }}" role="status">{{ f.text }}</div>
+{% endfor %}
+
 <section class="card-row">
     <div class="card">
         <h2 class="card-label">Coffee, last 7 days</h2>
@@ -29,7 +33,50 @@
     </div>
 </section>
 
-<section class="panel">
+<section class="dash-grid">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>Log a purchase</h2>
+        </div>
+        <form method="post" action="/transactions/add" class="log-form">
+            <label class="field">
+                <span class="field-label">Merchant</span>
+                <input type="text" name="merchant" list="log-merchants" maxlength="120"
+                       value="{{ form_submitted.merchant ?? '' }}" placeholder="e.g. Second Cup"
+                       class="{{ form_errors.merchant is defined ? 'input-error' }}" required>
+                {% if form_errors.merchant is defined %}<span class="field-error">{{ form_errors.merchant }}</span>{% endif %}
+            </label>
+            <label class="field">
+                <span class="field-label">Amount</span>
+                <input type="text" inputmode="decimal" name="amount"
+                       value="{{ form_submitted.amount ?? '' }}" placeholder="4.75"
+                       class="{{ form_errors.amount is defined ? 'input-error' }}" required>
+                {% if form_errors.amount is defined %}<span class="field-error">{{ form_errors.amount }}</span>{% endif %}
+            </label>
+            <label class="field">
+                <span class="field-label">Category</span>
+                <select name="category" class="{{ form_errors.category is defined ? 'input-error' }}">
+                    {% for c in categories %}
+                        <option value="{{ c }}" {{ (form_submitted.category ?? 'coffee') == c ? 'selected' }}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+                {% if form_errors.category is defined %}<span class="field-error">{{ form_errors.category }}</span>{% endif %}
+            </label>
+            <label class="field">
+                <span class="field-label">Date</span>
+                <input type="date" name="date" value="{{ form_submitted.date ?? "now"|date("Y-m-d") }}" max="{{ "now"|date("Y-m-d") }}"
+                       class="{{ form_errors.date is defined ? 'input-error' }}">
+                {% if form_errors.date is defined %}<span class="field-error">{{ form_errors.date }}</span>{% endif %}
+            </label>
+            <button type="submit" class="btn btn-primary log-submit">Log it</button>
+        </form>
+        <datalist id="log-merchants">
+            {% for m in merchants %}<option value="{{ m }}"></option>{% endfor %}
+        </datalist>
+        <p class="muted">Logging a purchase immediately evaluates every active rule.</p>
+    </div>
+
+    <div class="panel">
     <div class="panel-head">
         <h2>Recent purchases</h2>
         <a class="btn btn-primary" href="/rules">Build a rule &rarr;</a>
@@ -59,8 +106,9 @@
     {% else %}
     <div class="empty">
         <p><strong>No purchases yet.</strong></p>
-        <p>Add one and the dashboard fills in.</p>
+        <p>Log one and the dashboard fills in.</p>
     </div>
     {% endif %}
+    </div>
 </section>
 {% endblock %}

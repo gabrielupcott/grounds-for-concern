@@ -184,6 +184,31 @@ input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); outli
 .sentence { color: var(--ink-soft); font-size: 0.88rem; }
 .empty-cta { margin-top: 1rem; }
 
+/* Flash + notices */
+.notice-ok { background: #e8f0dd; border: 1px solid #cddec0; color: var(--green); }
+.notice-fire { background: var(--amber-bg); border: 1px solid #f3d68a; color: #8a4b06; }
+.field-error { color: var(--red); font-size: 0.82rem; }
+
+/* Dashboard grid + log form */
+.dash-grid { display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.log-form { display: grid; gap: 0.85rem; }
+.log-submit { justify-self: start; }
+input[type="date"] { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.65rem; }
+
+/* Alerts */
+.alert-list { display: grid; gap: 0.9rem; }
+.alert-card { padding: 1rem 1.25rem; }
+.alert-card.is-new { border-color: #f3d68a; background: #fffdf7; }
+.alert-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.alert-date { color: var(--ink-soft); font-size: 0.88rem; white-space: nowrap; }
+.alert-summary { margin: 0.55rem 0 0.2rem; color: var(--ink-soft); font-size: 0.95rem; }
+.alert-numbers { margin: 0; }
+.chip-new { background: var(--amber-bg); border-color: #f3d68a; color: var(--amber); margin-left: 0.4rem; }
+
+@media (max-width: 50rem) {
+    .dash-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 50rem) {
     .builder-grid { grid-template-columns: 1fr; }
     .builder-side { position: static; }

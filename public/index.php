@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 $config = require dirname(__DIR__) . '/src/bootstrap.php';
 
+session_start();
+
 // Let the built-in server serve static files directly.
 if (PHP_SAPI === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -60,7 +62,13 @@ try {
                 'coffee7' => $txns->categoryStatsSince('coffee', 6), // 6 days ago + today = 7 days
                 'coffee30' => $txns->categoryStatsSince('coffee', 29),
                 'weekTotal' => $txns->totalSince(6),
+                'merchants' => $txns->distinctMerchants(),
+                'categories' => TransactionRepository::CATEGORIES,
+                'flash' => $_SESSION['flash'] ?? [],
+                'form_errors' => [],
+                'form_submitted' => [],
             ]);
+            unset($_SESSION['flash']);
             break;
 
         // ---- Rules: list, build, edit ------------------------------------
@@ -171,6 +179,119 @@ try {
                 http_response_code(502);
                 echo json_encode(['ok' => false, 'errors' => ['Could not reach the rule engine. Is it running?']]);
             }
+            break;
+
+        // ---- Live fire: log a purchase, evaluate every active rule ----------
+
+        case $path === '/transactions/add' && $method === 'POST':
+            $errors = [];
+            $merchant = trim((string) ($_POST['merchant'] ?? ''));
+            $amountRaw = str_replace(['$', ','], '', (string) ($_POST['amount'] ?? ''));
+            $amount = $amountRaw === '' ? 0.0 : round((float) $amountRaw, 2);
+            $category = (string) ($_POST['category'] ?? '');
+            $date = (string) ($_POST['date'] ?? date('Y-m-d'));
+
+            if ($merchant === '') {
+                $errors['merchant'] = 'Who got the money?';
+            } elseif (mb_strlen($merchant) > 120) {
+                $errors['merchant'] = 'Merchant names max out at 120 characters.';
+            }
+            if ($amount <= 0) {
+                $errors['amount'] = 'Amount must be more than zero.';
+            } elseif ($amount > 10000) {
+                $errors['amount'] = 'Let’s keep individual purchases under $10,000.';
+            }
+            if (!in_array($category, TransactionRepository::CATEGORIES, true)) {
+                $errors['category'] = 'Pick a category.';
+            }
+            // The "!" resets unparsed components to zero — without it,
+            // createFromFormat fills the time with *now*, and today reads as
+            // the future.
+            $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+            $today = new DateTimeImmutable('today');
+            if (!$dt || $dt->format('Y-m-d') !== $date) {
+                $errors['date'] = 'That date doesn’t look right.';
+            } elseif ($dt > $today) {
+                $errors['date'] = 'Can’t log purchases from the future.';
+            } elseif ($dt < $today->modify('-365 days')) {
+                $errors['date'] = 'Keep it within the last year.';
+            }
+
+            if ($errors) {
+                http_response_code(422);
+                echo $twig->render('dashboard.twig', [
+                    'active_nav' => 'dashboard',
+                    'recent' => $txns->recent(15),
+                    'coffee7' => $txns->categoryStatsSince('coffee', 6),
+                    'coffee30' => $txns->categoryStatsSince('coffee', 29),
+                    'weekTotal' => $txns->totalSince(6),
+                    'merchants' => $txns->distinctMerchants(),
+                    'categories' => TransactionRepository::CATEGORIES,
+                    'flash' => $_SESSION['flash'] ?? [],
+                    'form_errors' => $errors,
+                    'form_submitted' => $_POST,
+                ]);
+                unset($_SESSION['flash']);
+                break;
+            }
+
+            $txns->add($date, $merchant, $category, (int) round($amount * 100));
+            $_SESSION['flash'][] = [
+                'type' => 'ok',
+                'text' => sprintf('Logged $%s at %s.', number_format($amount, 2), $merchant),
+            ];
+
+            // The moment of truth: evaluate every active rule over its window.
+            try {
+                foreach ($rules->active() as $rule) {
+                    $def = $rule['definition'];
+                    $windowStart = (new DateTimeImmutable('today'))
+                        ->modify(sprintf('-%d days', $def['window_days'] - 1))
+                        ->format('Y-m-d');
+                    $verdict = $engine->evaluate($def, $txns->sinceForEngine($windowStart), $today->format('Y-m-d'));
+                    if ($verdict['triggered']) {
+                        $inserted = $alertRepo->insertIgnore(
+                            (int) $rule['id'],
+                            $today->format('Y-m-d'),
+                            (int) $verdict['window_total_cents'],
+                            (int) $verdict['transaction_count'],
+                            Sentence::render($def)
+                        );
+                        if ($inserted) {
+                            $_SESSION['flash'][] = [
+                                'type' => 'fire',
+                                'text' => sprintf(
+                                    '%s fired — $%s in the last %d days. See Alerts.',
+                                    $rule['name'],
+                                    number_format($verdict['window_total_cents'] / 100, 2),
+                                    $def['window_days']
+                                ),
+                            ];
+                        }
+                    }
+                }
+            } catch (Throwable $e) {
+                $_SESSION['flash'][] = [
+                    'type' => 'warn',
+                    'text' => 'Purchase saved, but the rule engine is unreachable — rules weren’t evaluated.',
+                ];
+            }
+
+            header('Location: /');
+            break;
+
+        // ---- Alerts inbox --------------------------------------------------
+
+        case $path === '/alerts' && $method === 'GET':
+            echo $twig->render('alerts/index.twig', [
+                'active_nav' => 'alerts',
+                'alerts' => $alertRepo->recent(),
+            ]);
+            break;
+
+        case $path === '/alerts/seen-all' && $method === 'POST':
+            $alertRepo->markAllSeen();
+            header('Location: /alerts');
             break;
 
         default:

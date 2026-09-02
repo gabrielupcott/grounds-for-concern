@@ -1,0 +1,45 @@
+{% extends 'base.twig' %}
+
+{% block title %}Alerts — Grounds for Concern{% endblock %}
+
+{% block content %}
+<div class="panel-head page-head">
+    <div>
+        <h1>Alerts</h1>
+        <p class="lede">Rules that fired, with the receipts.</p>
+    </div>
+    {% if alerts|filter(a => not a.seen)|length > 0 %}
+    <form method="post" action="/alerts/seen-all">
+        <button class="btn" type="submit">Mark all seen</button>
+    </form>
+    {% endif %}
+</div>
+
+{% if alerts %}
+<div class="alert-list">
+    {% for a in alerts %}
+    <div class="panel alert-card {{ a.seen ? '' : 'is-new' }}">
+        <div class="alert-head">
+            <div>
+                <strong>{{ a.rule_name }}</strong>
+                {% if not a.seen %}<span class="chip chip-new">new</span>{% endif %}
+            </div>
+            <span class="alert-date">{{ a.triggered_on|date('D M j, Y') }}</span>
+        </div>
+        <p class="alert-summary">{{ a.summary }}</p>
+        <p class="alert-numbers">
+            <strong>${{ a.window_total_cents|money }}</strong>
+            across {{ a.transaction_count }} purchase{{ a.transaction_count == 1 ? '' : 's' }}
+            in the window.
+        </p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="panel empty tall">
+    <p><strong>Nothing has fired yet.</strong></p>
+    <p>Either you're remarkably disciplined, or you haven't built a rule.</p>
+    <p class="empty-cta"><a class="btn btn-primary" href="/rules/new">Build a rule</a></p>
+</div>
+{% endif %}
+{% endblock %}
