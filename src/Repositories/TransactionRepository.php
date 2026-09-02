@@ -71,6 +71,12 @@ final class TransactionRepository
         );
     }
 
+    /** Distinct merchant names, for the builder's datalist suggestions. */
+    public function distinctMerchants(): array
+    {
+        return $this->pdo->query('SELECT DISTINCT merchant FROM transactions ORDER BY merchant')->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
     public function add(string $date, string $merchant, string $category, int $amountCents): int
     {
         $stmt = $this->pdo->prepare(

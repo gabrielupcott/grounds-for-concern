@@ -1,0 +1,185 @@
+{% extends 'base.twig' %}
+
+{% block title %}{{ rule.id ? 'Edit rule' : 'New rule' }} — Grounds for Concern{% endblock %}
+
+{% block content %}
+<div class="panel-head page-head">
+    <div>
+        <h1>{{ rule.id ? 'Edit “' ~ rule.name ~ '”' : 'Build a rule' }}</h1>
+        <p class="lede">No code, no formulas — the preview below says exactly what you're building.</p>
+    </div>
+</div>
+
+<form method="post" action="{{ rule.id ? '/rules/' ~ rule.id : '/rules' }}" id="rule-builder" class="builder-grid"
+      data-preview-url="/rules/preview" data-backtest-url="/rules/backtest"
+      data-categories="{{ categories|json_encode|e('html_attr') }}">
+
+    <div class="builder-main">
+
+        {% if errors %}
+        <div class="notice notice-warn" role="alert">
+            <strong>Almost there.</strong>
+            <ul>
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <section class="panel">
+            <h2>What should it watch?</h2>
+
+            <div class="match-toggle" role="radiogroup" aria-label="How conditions combine">
+                <label class="match-opt">
+                    <input type="radio" name="group_match" value="all" {{ (submitted.group_match ?? rule.definition.group.match ?? 'all') == 'all' ? 'checked' }}>
+                    <span><strong>All</strong> conditions must match</span>
+                </label>
+                <label class="match-opt">
+                    <input type="radio" name="group_match" value="any" {{ (submitted.group_match ?? rule.definition.group.match ?? 'all') == 'any' ? 'checked' }}>
+                    <span><strong>Any</strong> condition can match</span>
+                </label>
+            </div>
+
+            <div id="condition-rows">
+                {% set conds = submitted.cond_field is defined ? [] : (rule.definition.group.conditions ?? []) %}
+                {% set rows = [] %}
+                {% if submitted.cond_field is defined %}
+                    {% for i in submitted.cond_field|keys %}
+                        {% set rows = rows|merge([{
+                            field: submitted.cond_field[i],
+                            operator: submitted.cond_operator[i],
+                            value: submitted.cond_value[i]
+                        }]) %}
+                    {% endfor %}
+                {% else %}
+                    {% set rows = conds %}
+                {% endif %}
+                {% if rows is empty %}{% set rows = [{field: 'category', operator: 'is', value: ''}] %}{% endif %}
+
+                {% for c in rows %}
+                <div class="condition-row" data-row>
+                    <select name="cond_field[]" class="cond-field" aria-label="Watch">
+                        <option value="category" {{ c.field == 'category' ? 'selected' }}>purchases on category</option>
+                        <option value="merchant" {{ c.field == 'merchant' ? 'selected' }}>purchases at merchant</option>
+                    </select>
+                    <select name="cond_operator[]" class="cond-op" aria-label="Comparison">
+                        <option value="is" {{ c.operator == 'is' ? 'selected' }}>is</option>
+                        <option value="is_not" {{ c.operator == 'is_not' ? 'selected' }}>is not</option>
+                        <option value="contains" {{ c.operator == 'contains' ? 'selected' }}>contains</option>
+                    </select>
+                    <span class="cond-value-wrap" data-value-slot>
+                        {% if c.field == 'category' %}
+                            <select name="cond_value[]" class="cond-value" aria-label="Value">
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {{ c.value == cat ? 'selected' }}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="text" name="cond_value[]" class="cond-value" list="merchant-names"
+                                   value="{{ c.value }}" placeholder="e.g. Starbucks" aria-label="Value">
+                        {% endif %}
+                    </span>
+                    <button type="button" class="btn btn-quiet cond-remove" data-remove aria-label="Remove condition">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <datalist id="merchant-names">
+                {% for m in merchants %}<option value="{{ m }}"></option>{% endfor %}
+            </datalist>
+
+            <button type="button" class="btn" id="add-condition">+ Add condition</button>
+
+            <template id="condition-template">
+                <div class="condition-row" data-row>
+                    <select name="cond_field[]" class="cond-field" aria-label="Watch">
+                        <option value="category">purchases on category</option>
+                        <option value="merchant">purchases at merchant</option>
+                    </select>
+                    <select name="cond_operator[]" class="cond-op" aria-label="Comparison">
+                        <option value="is">is</option>
+                        <option value="is_not">is not</option>
+                        <option value="contains">contains</option>
+                    </select>
+                    <span class="cond-value-wrap" data-value-slot>
+                        <select name="cond_value[]" class="cond-value" aria-label="Value">
+                            {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+                        </select>
+                    </span>
+                    <button type="button" class="btn btn-quiet cond-remove" data-remove aria-label="Remove condition">&times;</button>
+                </div>
+            </template>
+        </section>
+
+        <section class="panel">
+            <h2>When should it fire?</h2>
+
+            <div class="threshold-row">
+                <label class="field">
+                    <span class="field-label">If I</span>
+                    <select name="threshold_metric" aria-label="Metric">
+                        <option value="total" {{ (submitted.threshold_metric ?? rule.definition.threshold.metric ?? 'total') == 'total' ? 'selected' }}>spend</option>
+                        <option value="count" {{ (submitted.threshold_metric ?? rule.definition.threshold.metric) == 'count' ? 'selected' }}>make purchases</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span class="field-label">&nbsp;</span>
+                    <select name="threshold_operator" aria-label="Comparison">
+                        <option value=">" {{ (submitted.threshold_operator ?? rule.definition.threshold.operator ?? '>') == '>' ? 'selected' }}>more than</option>
+                        <option value=">=" {{ (submitted.threshold_operator ?? rule.definition.threshold.operator) == '>=' ? 'selected' }}>at least</option>
+                    </select>
+                </label>
+                <label class="field field-amount">
+                    <span class="field-label">Amount</span>
+                    <input type="text" inputmode="decimal" name="threshold_value" id="threshold_value"
+                           value="{{ submitted.threshold_value ?? rule.definition.threshold.value ?? '' }}"
+                           placeholder="60" aria-label="Amount">
+                </label>
+            </div>
+
+            <label class="field">
+                <span class="field-label">Within</span>
+                <select name="window_days" aria-label="Time window">
+                    {% for w in [1, 3, 7, 14, 30] %}
+                        <option value="{{ w }}" {{ (submitted.window_days ?? rule.definition.window_days ?? 7) == w ? 'selected' }}>
+                            {% if w == 1 %}a single day{% else %}any {{ w }} days{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </section>
+
+        <section class="panel">
+            <label class="field">
+                <span class="field-label">Rule name</span>
+                <input type="text" name="name" value="{{ submitted.name ?? rule.name ?? '' }}"
+                       placeholder="e.g. Coffee budget" maxlength="120"
+                       class="{{ errors.name is defined ? 'input-error' }}">
+            </label>
+        </section>
+
+        <div class="builder-actions">
+            <button type="submit" class="btn btn-primary">{{ rule.id ? 'Save changes' : 'Save rule' }}</button>
+            <a class="btn btn-quiet" href="/rules">Cancel</a>
+        </div>
+    </div>
+
+    <aside class="builder-side">
+        <div class="panel preview-panel">
+            <h2><span class="live-dot" aria-hidden="true"></span>Live preview</h2>
+            <p class="preview-sentence" id="preview-sentence" aria-live="polite">
+                {{ rule.id ? (rule.definition|rule_sentence) : 'Alert me when…' }}
+            </p>
+            <ul class="preview-errors" id="preview-errors" hidden></ul>
+        </div>
+
+        <div class="panel">
+            <h2>Would it have fired?</h2>
+            <p class="muted">Replay this rule against the last 90 days before you commit to it.</p>
+            <button type="button" class="btn" id="backtest-btn">Run backtest</button>
+            <div id="backtest-results" class="backtest-results">
+                <p class="muted" id="backtest-hint">Results appear here.</p>
+            </div>
+        </div>
+    </aside>
+</form>
+{% endblock %}

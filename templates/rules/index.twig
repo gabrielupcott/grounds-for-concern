@@ -1,0 +1,60 @@
+{% extends 'base.twig' %}
+
+{% block title %}Rules — Grounds for Concern{% endblock %}
+
+{% block content %}
+<div class="panel-head page-head">
+    <div>
+        <h1>Rules</h1>
+        <p class="lede">Tell the app what to watch. It does the counting, you do the deciding.</p>
+    </div>
+    <a class="btn btn-primary" href="/rules/new">+ New rule</a>
+</div>
+
+{% if rules %}
+<div class="panel">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Rule</th>
+            <th>Status</th>
+            <th class="num">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in rules %}
+            <tr>
+                <td>
+                    <strong>{{ r.name }}</strong><br>
+                    <span class="sentence">{{ r.definition|rule_sentence }}</span>
+                </td>
+                <td>
+                    {% if r.is_active %}
+                        <span class="chip chip-on">watching</span>
+                    {% else %}
+                        <span class="chip">paused</span>
+                    {% endif %}
+                </td>
+                <td class="num">
+                    <form method="post" action="/rules/{{ r.id }}/toggle" class="inline">
+                        <button class="btn btn-quiet" type="submit">{{ r.is_active ? 'Pause' : 'Resume' }}</button>
+                    </form>
+                    <a class="btn btn-quiet" href="/rules/{{ r.id }}/edit">Edit</a>
+                    <form method="post" action="/rules/{{ r.id }}/delete" class="inline"
+                          onsubmit="return confirm('Delete “{{ r.name }}”? Its alerts go too.')">
+                        <button class="btn btn-danger-quiet" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="panel empty tall">
+    <p><strong>No rules yet.</strong></p>
+    <p>Your budget is currently a mystery.</p>
+    <p class="empty-cta"><a class="btn btn-primary" href="/rules/new">Build your first rule</a></p>
+</div>
+{% endif %}
+{% endblock %}
