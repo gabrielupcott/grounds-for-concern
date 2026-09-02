@@ -3,6 +3,10 @@
 {% block title %}Rules — Grounds for Concern{% endblock %}
 
 {% block content %}
+{% if saved %}
+<div class="notice notice-ok" role="status">Rule saved. It's watching now.</div>
+{% endif %}
+
 <div class="panel-head page-head">
     <div>
         <h1>Rules</h1>

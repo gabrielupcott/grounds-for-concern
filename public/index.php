@@ -74,7 +74,11 @@ try {
         // ---- Rules: list, build, edit ------------------------------------
 
         case $path === '/rules' && $method === 'GET':
-            echo $twig->render('rules/index.twig', ['active_nav' => 'rules', 'rules' => $rules->all()]);
+            echo $twig->render('rules/index.twig', [
+                'active_nav' => 'rules',
+                'rules' => $rules->all(),
+                'saved' => isset($_GET['saved']),
+            ]);
             break;
 
         case $path === '/rules/new' && $method === 'GET':
