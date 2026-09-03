@@ -1,5 +1,41 @@
-// Grounds for Concern — progressive enhancement for the rule builder.
-// The form works without this file; JS makes it feel alive.
+// Grounds for Concern - progressive enhancement.
+// Each module targets one page and bails out early if it isn't there.
+// The underlying forms work without this file; JS makes them feel alive.
+
+// Flash banners (all pages): transient by design - the server shows them
+// once, then they're gone. Dismissal is pure polish, so the button is added
+// here rather than shipping a dead one in the no-JS markup.
+(() => {
+    'use strict';
+
+    document.querySelectorAll('.notice').forEach((notice) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'notice-dismiss';
+        btn.setAttribute('aria-label', 'Dismiss');
+        btn.textContent = '\u00d7';
+        btn.addEventListener('click', () => notice.remove());
+        notice.appendChild(btn);
+    });
+})();
+
+// Dashboard: the add-purchase panel is a native <details> disclosure,
+// so it toggles without JS. We only focus the first field when it opens.
+(() => {
+    'use strict';
+
+    const addCup = document.querySelector('.add-cup');
+    if (!addCup) return;
+
+    addCup.addEventListener('toggle', () => {
+        if (addCup.open) {
+            const merchant = addCup.querySelector('input[name="merchant"]');
+            if (merchant) merchant.focus();
+        }
+    });
+})();
+
+// Rule builder.
 (() => {
     'use strict';
 

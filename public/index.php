@@ -157,7 +157,9 @@ try {
                 'active_nav' => 'rules',
                 'rules' => $rules->all(),
                 'saved' => isset($_GET['saved']),
+                'flash' => $_SESSION['flash'] ?? [],
             ]);
+            unset($_SESSION['flash']);
             break;
 
         case $path === '/rules/new' && $method === 'GET':
@@ -172,7 +174,11 @@ try {
         case $path === '/rules' && $method === 'POST':
             try {
                 $definition = RuleFactory::fromForm($_POST);
-                $rules->insert($definition['name'], $definition);
+                $id = $rules->insert($definition['name'], $definition);
+                // A rule can be born already over the line - evaluate at save.
+                $_SESSION['flash'] = array_merge($_SESSION['flash'] ?? [], $evaluateAndRecord(
+                    [['id' => $id, 'name' => $definition['name'], 'definition' => $definition]]
+                ));
                 header('Location: /rules?saved=1');
             } catch (RuleValidationException $e) {
                 http_response_code(422);
@@ -204,6 +210,10 @@ try {
             try {
                 $definition = RuleFactory::fromForm($_POST);
                 $rules->update((int) $m[1], $definition['name'], $definition);
+                // Edits re-evaluate too: a tightened budget may already be crossed.
+                $_SESSION['flash'] = array_merge($_SESSION['flash'] ?? [], $evaluateAndRecord(
+                    [['id' => (int) $m[1], 'name' => $definition['name'], 'definition' => $definition]]
+                ));
                 header('Location: /rules?saved=1');
             } catch (RuleValidationException $e) {
                 http_response_code(422);
@@ -225,7 +235,12 @@ try {
         case (bool) preg_match('#^/rules/(\d+)/toggle$#', $path, $m) && $method === 'POST':
             $rule = $rules->find((int) $m[1]);
             if ($rule) {
-                $rules->setActive((int) $m[1], !$rule['is_active']);
+                $resuming = !$rule['is_active'];
+                $rules->setActive((int) $m[1], $resuming);
+                if ($resuming) {
+                    // Resuming counts as a save: the rule may come back over the line.
+                    $_SESSION['flash'] = array_merge($_SESSION['flash'] ?? [], $evaluateAndRecord([$rule]));
+                }
             }
             header('Location: /rules');
             break;
@@ -328,7 +343,7 @@ try {
             } elseif ($amount > 10000) {
                 $errors['amount'] = 'Amount is too large.';
             }
-            // The "!" resets unparsed components to zero — without it,
+            // The "!" resets unparsed components to zero - without it,
             // createFromFormat fills the time with *now*, and today reads as
             // the future.
             $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
@@ -358,41 +373,10 @@ try {
                 'text' => sprintf('Added $%s at %s.', number_format($amount, 2), $merchant),
             ];
 
-            // The moment of truth: evaluate every active rule over its window.
-            try {
-                foreach ($rules->active() as $rule) {
-                    $def = $rule['definition'];
-                    $windowStart = (new DateTimeImmutable('today'))
-                        ->modify(sprintf('-%d days', $def['window_days'] - 1))
-                        ->format('Y-m-d');
-                    $verdict = $engine->evaluate($def, $txns->sinceForEngine($windowStart), $today->format('Y-m-d'));
-                    if ($verdict['triggered']) {
-                        $inserted = $alertRepo->insertIgnore(
-                            (int) $rule['id'],
-                            $today->format('Y-m-d'),
-                            (int) $verdict['window_total_cents'],
-                            (int) $verdict['transaction_count'],
-                            Sentence::render($def)
-                        );
-                        if ($inserted) {
-                            $_SESSION['flash'][] = [
-                                'type' => 'fire',
-                                'text' => sprintf(
-                                    '%s fired: $%s over %d days. See Alerts.',
-                                    $rule['name'],
-                                    number_format($verdict['window_total_cents'] / 100, 2),
-                                    $def['window_days']
-                                ),
-                            ];
-                        }
-                    }
-                }
-            } catch (Throwable $e) {
-                $_SESSION['flash'][] = [
-                    'type' => 'warn',
-                    'text' => 'Saved, but the rule engine is unreachable. Rules were not evaluated.',
-                ];
-            }
+            // The moment of truth: every active rule gets one shot at the new
+            // purchase. Save-time evaluation (create/edit/resume) walks the
+            // same helper - one code path, one dedupe.
+            $_SESSION['flash'] = array_merge($_SESSION['flash'] ?? [], $evaluateAndRecord($rules->active()));
 
             header('Location: /');
             break;

@@ -1,10 +1,11 @@
 # Grounds for Concern
 
 A small self-hosted budget watcher for one habit: coffee. Purchases are
-split **home made** vs **bought**, you define rules like *"alert me when I
-spend more than $60 on bought coffee within any 7 days"*, and the app
-watches your feed and fires an alert the moment a new purchase pushes you
-over the line. There's also a home-made streak, because the cheapest cup
+split **homemade** vs **cafe**, you define rules like *"alert me when I
+spend more than $60 on cafe coffee within any 7 days"*, and the app
+watches your feed and fires an alert the moment a new cup pushes you
+over the line, or the moment you save, edit, or resume a rule that's
+already over it. There's also a homemade streak, because the cheapest cup
 is the one you brew yourself.
 
 - **PHP + Twig** front end (no framework, plain PDO)
@@ -89,9 +90,12 @@ backtesting share the exact same code path. Rules are JSON documents built
 from constrained selects, so the UI can't construct logic the engine can't
 parse. Money is integer cents everywhere except display.
 
-Alerts are deduplicated by a database constraint (`UNIQUE (rule_id,
-triggered_on)`) — evaluating the same rule twice on the same day can't spam
-the inbox.
+Alerts are deduplicated by a database constraint, `UNIQUE (rule_id,
+triggered_on)`, so evaluating the same rule twice on the same day can't spam
+the inbox, which is what makes it safe to re-evaluate on every save, edit,
+and resume as well as on every cup. Dismissing an alert hides it from
+the inbox but keeps its row, so a dismissed alert also can't re-fire later
+the same day.
 
 ## Tests
 

@@ -117,11 +117,27 @@ body {
 .inline { display: inline; }
 
 /* Notices */
-.notice { border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.95rem; }
+.notice { position: relative; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.95rem; }
 .notice ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
 .notice-warn { background: var(--amber-bg); border: 1px solid #f3d68a; color: var(--amber); }
+.notice-link { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.notice-link:hover { text-decoration: none; }
+
+/* Flash banner dismiss (button injected by app.js; :has() reserves its space) */
+.notice-dismiss {
+    position: absolute; top: 50%; right: 0.7rem; transform: translateY(-50%);
+    border: none; background: transparent; color: inherit; cursor: pointer;
+    font: inherit; font-size: 1.15rem; line-height: 1; padding: 0.2rem 0.45rem;
+    border-radius: 6px; opacity: 0.65;
+}
+.notice-dismiss:hover { opacity: 1; }
+.notice-dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.notice:has(.notice-dismiss) { padding-right: 2.75rem; }
 
 /* Forms */
+/* Form controls keep a UA font unless told otherwise - normalize in one place
+   (covers checkbox/radio too, which render no text but audit the same). */
+button, input, select { font-family: inherit; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 .field-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 600; }
 input[type="text"], input[type="number"], select {

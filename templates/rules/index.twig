@@ -1,8 +1,12 @@
 {% extends 'base.twig' %}
 
-{% block title %}Rules — Grounds for Concern{% endblock %}
+{% block title %}Rules · Grounds for Concern{% endblock %}
 
 {% block content %}
+{% for f in flash %}
+<div class="notice notice-{{ f.type }}" role="status">{{ f.text }}{% if f.link is defined %} <a class="notice-link" href="{{ f.link.href }}">{{ f.link.label }}</a>{% endif %}</div>
+{% endfor %}
+
 {% if saved %}
 <div class="notice notice-ok" role="status">Rule saved.</div>
 {% endif %}
