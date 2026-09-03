@@ -24,6 +24,37 @@ final class RuleRepository
         return array_map([$this, 'hydrate'], $stmt->fetchAll());
     }
 
+    /**
+     * The tightest active budget rule for a window: the rule (if any) a
+     * dashboard bought card may take its meter line from. Needs total metric
+     * and a single "category is bought" condition (with one condition,
+     * any/all grouping are equivalent, so both are accepted). Anything
+     * narrower (one café, a purchase count) measures a different population
+     * and earns no bar. Tightest wins when several match: that's the line
+     * you're crossing first.
+     */
+    public function budgetForWindow(int $days): ?array
+    {
+        $best = null;
+        foreach ($this->active() as $rule) {
+            $d = $rule['definition'];
+            $c = $d['group']['conditions'] ?? null;
+            if ((int) $d['window_days'] !== $days
+                || $d['threshold']['metric'] !== 'total'
+                || !is_array($c) || count($c) !== 1
+                || $c[0]['field'] !== 'category'
+                || $c[0]['operator'] !== 'is'
+                || $c[0]['value'] !== 'bought'
+            ) {
+                continue;
+            }
+            if ($best === null || $d['threshold']['value'] < $best['threshold']['value']) {
+                $best = $d;
+            }
+        }
+        return $best;
+    }
+
     public function find(int $id): ?array
     {
         $stmt = $this->pdo->prepare('SELECT id, name, definition, is_active, created_at FROM rules WHERE id = ?');

@@ -53,17 +53,96 @@ $formContext = static fn (): array => [
     'merchants' => $txns->distinctMerchants(),
 ];
 
+/**
+ * Shared template data for the dashboard: stats plus rule-driven meters.
+ * A card's meter line comes from the user's own budget rule for that
+ * window - no rule, no bar. "Over" respects the rule's operator, so a
+ * ">=" budget goes red exactly when it fires.
+ */
+$dashboardContext = static function () use ($txns, $rules): array {
+    $bought7 = $txns->categoryStatsSince('bought', 6); // 6 days ago + today = 7 days
+    $bought30 = $txns->categoryStatsSince('bought', 29);
+
+    $meter = static function (array $stats, ?array $rule): ?array {
+        if ($rule === null) {
+            return null;
+        }
+        $threshold = (int) round($rule['threshold']['value'] * 100);
+        $over = $rule['threshold']['operator'] === '>='
+            ? $stats['total_cents'] >= $threshold
+            : $stats['total_cents'] > $threshold;
+        return ['threshold_cents' => $threshold, 'over' => $over];
+    };
+
+    return [
+        'active_nav' => 'dashboard',
+        'recent' => $txns->recent(15),
+        'bought7' => $bought7,
+        'bought30' => $bought30,
+        'home7' => $txns->categoryStatsSince('home_made', 6),
+        'streak' => $txns->homeStreak(),
+        'merchants' => $txns->distinctMerchants(),
+        'budget7' => $meter($bought7, $rules->budgetForWindow(7)),
+        'budget30' => $meter($bought30, $rules->budgetForWindow(30)),
+    ];
+};
+
+/**
+ * Evaluate rules as of today and record an alert for each that fires.
+ * Shared by live fire (a purchase just landed) and save-time evaluation
+ * (create, edit, resume) - the engine is stateless, so both walk the
+ * identical code path. The (rule_id, triggered_on) dedupe makes
+ * re-evaluating the same rule on the same day a no-op.
+ *
+ * @param array $rulesToCheck rule rows (id, name, definition)
+ * @return array flash entries to merge into the session
+ */
+$evaluateAndRecord = static function (array $rulesToCheck) use ($engine, $txns, $alertRepo): array {
+    $flash = [];
+    try {
+        $today = new DateTimeImmutable('today');
+        foreach ($rulesToCheck as $rule) {
+            $def = $rule['definition'];
+            $windowStart = $today
+                ->modify(sprintf('-%d days', $def['window_days'] - 1))
+                ->format('Y-m-d');
+            $verdict = $engine->evaluate($def, $txns->sinceForEngine($windowStart), $today->format('Y-m-d'));
+            if (!$verdict['triggered']) {
+                continue;
+            }
+            $inserted = $alertRepo->insertIgnore(
+                (int) $rule['id'],
+                $today->format('Y-m-d'),
+                (int) $verdict['window_total_cents'],
+                (int) $verdict['transaction_count'],
+                Sentence::render($def)
+            );
+            if ($inserted) {
+                $flash[] = [
+                    'type' => 'fire',
+                    'text' => sprintf(
+                        '%s fired: $%s over %d days.',
+                        $rule['name'],
+                        number_format($verdict['window_total_cents'] / 100, 2),
+                        $def['window_days']
+                    ),
+                    'link' => ['href' => '/alerts', 'label' => 'See Alerts'],
+                ];
+            }
+        }
+    } catch (Throwable $e) {
+        $flash[] = [
+            'type' => 'warn',
+            'text' => 'The rule engine is unreachable. Rules were not evaluated.',
+        ];
+    }
+    return $flash;
+};
+
 try {
     switch (true) {
         case $path === '/':
-            echo $twig->render('dashboard.twig', [
-                'active_nav' => 'dashboard',
-                'recent' => $txns->recent(15),
-                'bought7' => $txns->categoryStatsSince('bought', 6), // 6 days ago + today = 7 days
-                'bought30' => $txns->categoryStatsSince('bought', 29),
-                'home7' => $txns->categoryStatsSince('home_made', 6),
-                'streak' => $txns->homeStreak(),
-                'merchants' => $txns->distinctMerchants(),
+            echo $twig->render('dashboard.twig', $dashboardContext() + [
                 'flash' => $_SESSION['flash'] ?? [],
                 'form_errors' => [],
                 'form_submitted' => [],
@@ -264,14 +343,7 @@ try {
 
             if ($errors) {
                 http_response_code(422);
-                echo $twig->render('dashboard.twig', [
-                    'active_nav' => 'dashboard',
-                    'recent' => $txns->recent(15),
-                    'bought7' => $txns->categoryStatsSince('bought', 6),
-                    'bought30' => $txns->categoryStatsSince('bought', 29),
-                    'home7' => $txns->categoryStatsSince('home_made', 6),
-                    'streak' => $txns->homeStreak(),
-                    'merchants' => $txns->distinctMerchants(),
+                echo $twig->render('dashboard.twig', $dashboardContext() + [
                     'flash' => $_SESSION['flash'] ?? [],
                     'form_errors' => $errors,
                     'form_submitted' => $_POST,

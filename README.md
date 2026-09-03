@@ -20,24 +20,29 @@ Budget apps bury you in charts. The interesting question is simpler:
 So the rule builder has three things you won't usually find:
 
 1. A **plain-English preview** that rewrites itself as you build the rule.
-2. A **live match count** — as you build, the sidebar shows what the rule sees
+2. A **live match count**: as you build, the sidebar shows what the rule sees
    right now ("Current Total: $56.50 ($3.50 from firing)") against your
    real data.
-3. A **backtest** — "this rule would have fired 3 times in the last 90 days,
-   here are the dates" — so you trust it before you save it.
+3. A **backtest**: "this rule would have fired 3 times in the last 90 days,
+   here are the dates", so you trust it before you save it.
 
-Rules can watch the category (home made / bought), the merchant, or both —
-so a café budget can exclude home brew, or count it. The streak card tracks
-consecutive days with at least one home-made cup and zero bought coffee.
+Rules can watch the source (homemade / cafe), the merchant, or both, so
+a café budget can exclude homemade cups, or count them. The streak card
+tracks consecutive days with at least one homemade cup and zero cafe coffee.
+The dashboard meters read their thresholds from your rules too: a bar only
+appears on a card when a budget rule exists for that window. No rule, no
+line to cross.
 
 ## Try it
 
-1. Log a `$4.75` bought coffee on the dashboard. Watch the weekly meter and
-   the home-made streak.
-2. Build the rule above (the builder starts you close to it). Watch the
-   preview sentence and live count change as you click. Run the backtest.
-3. Save it, then log one more coffee. The rule fires, and the alert lands in
-   the inbox with the exact window: how much, across how many purchases.
+1. Log a `$4.75` cafe coffee on the dashboard. The seed leaves the week at
+   `$56.50`, so the built-in weekly budget rule fires on the spot: the meter
+   crosses `$60` and the alert lands in the inbox.
+2. Build a rule of your own (the builder starts you close to the example
+   above). Watch the preview sentence and live count change as you click.
+   Run the backtest.
+3. Save it, then log one more coffee. It fires too, and the alert arrives
+   with the exact window: how much, across how many cups.
 
 ## Setup
 

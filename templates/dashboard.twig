@@ -44,10 +44,45 @@
             {% for m in merchants %}<option value="{{ m }}"></option>{% endfor %}
         </datalist>
     </div>
+</details>
 
-    <div class="panel">
+<section class="card-row">
+    <div class="card">
+        <h2 class="card-label">Bought (7 days)</h2>
+        <p class="card-value">${{ bought7.total_cents|money }}</p>
+        <p class="card-sub">{{ bought7.count }} cup{{ bought7.count == 1 ? '' : 's' }}</p>
+        {% if budget7 %}
+        <div class="meter" role="img"
+             aria-label="Bought coffee at {{ (bought7.total_cents / budget7.threshold_cents * 100)|round }} percent of the ${{ budget7.threshold_cents|money }} 7-day budget">
+            <div class="meter-fill {% if budget7.over %}is-over{% endif %}"
+                 style="width: {{ min(bought7.total_cents / budget7.threshold_cents * 100, 100) }}%"></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2 class="card-label">Bought (30 days)</h2>
+        <p class="card-value">${{ bought30.total_cents|money }}</p>
+        <p class="card-sub">{{ bought30.count }} cup{{ bought30.count == 1 ? '' : 's' }}</p>
+        {% if budget30 %}
+        <div class="meter" role="img"
+             aria-label="Bought coffee at {{ (bought30.total_cents / budget30.threshold_cents * 100)|round }} percent of the ${{ budget30.threshold_cents|money }} 30-day budget">
+            <div class="meter-fill {% if budget30.over %}is-over{% endif %}"
+                 style="width: {{ min(bought30.total_cents / budget30.threshold_cents * 100, 100) }}%"></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2 class="card-label">Home-made streak</h2>
+        <p class="card-value">{{ streak }} day{{ streak == 1 ? '' : 's' }}</p>
+        <p class="card-sub">{{ home7.count }} cup{{ home7.count == 1 ? '' : 's' }} brewed · ${{ home7.total_cents|money }}</p>
+    </div>
+</section>
+
+<section class="panel">
     <div class="panel-head">
-        <h2>Recent</h2>
+        <h2>Recent Cups</h2>
         <a class="btn" href="/rules">New rule</a>
     </div>
 
