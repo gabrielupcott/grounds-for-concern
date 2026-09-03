@@ -176,13 +176,33 @@ input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); outli
 .notice-fire { background: var(--amber-bg); border: 1px solid #f3d68a; color: #8a4b06; }
 .field-error { color: var(--red); font-size: 0.82rem; }
 
-/* Dashboard grid + log form */
-.dash-grid { display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-.log-form { display: grid; gap: 0.85rem; }
-.log-submit { justify-self: start; }
-.check-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.95rem; cursor: pointer; }
-.check-row input { accent-color: var(--accent); width: 1.05rem; height: 1.05rem; }
 input[type="date"] { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.65rem; }
+
+/* Add a cup - expanding disclosure (details/summary, no JS required) */
+.add-cup { margin-bottom: 1.75rem; }
+.add-cup summary {
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+    width: 100%; padding: 0.95rem 1rem; font-size: 1.08rem;
+    border-radius: var(--radius); cursor: pointer; list-style: none; user-select: none;
+}
+.add-cup summary::-webkit-details-marker { display: none; }
+.add-cup summary:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+.add-cup[open] summary { border-radius: var(--radius) var(--radius) 0 0; }
+.btn-hero-plus { font-size: 1.3rem; line-height: 1; font-weight: 700; transition: transform 0.15s ease; }
+.add-cup[open] .btn-hero-plus { transform: rotate(45deg); }
+.add-cup-body {
+    background: var(--card); border: 1px solid var(--line); border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 1rem 1.25rem 1.1rem;
+    box-shadow: 0 14px 30px rgba(45, 35, 28, 0.12);
+}
+.log-form { display: flex; flex-wrap: wrap; gap: 0.75rem 0.85rem; align-items: flex-end; }
+.log-form .field { min-width: 0; }
+.log-form .field-grow { flex: 1 1 12rem; }
+.log-form .field-amount { flex: 0 1 7.5rem; }
+.log-form .field-date { flex: 0 1 10.5rem; }
+.check-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.95rem; cursor: pointer; padding-bottom: 0.55rem; }
+.check-row input { accent-color: var(--accent); width: 1.05rem; height: 1.05rem; }
 
 /* Alerts */
 .alert-list { display: grid; gap: 0.9rem; }

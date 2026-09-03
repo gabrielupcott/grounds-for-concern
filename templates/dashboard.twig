@@ -4,41 +4,16 @@
 
 {% block content %}
 {% for f in flash %}
-<div class="notice notice-{{ f.type }}" role="status">{{ f.text }}</div>
+<div class="notice notice-{{ f.type }}" role="status">{{ f.text }}{% if f.link is defined %} <a class="notice-link" href="{{ f.link.href }}">{{ f.link.label }}</a>{% endif %}</div>
 {% endfor %}
 
-<section class="card-row">
-    <div class="card">
-        <h2 class="card-label">Bought (7 days)</h2>
-        <p class="card-value">${{ bought7.total_cents|money }}</p>
-        <p class="card-sub">{{ bought7.count }} purchase{{ bought7.count == 1 ? '' : 's' }}</p>
-        <div class="meter" role="img"
-             aria-label="Bought coffee at {{ (bought7.total_cents / 6000 * 100)|round }} percent of a $60 weekly budget">
-            <div class="meter-fill {% if bought7.total_cents > 6000 %}is-over{% endif %}"
-                 style="width: {{ min(bought7.total_cents / 6000 * 100, 100) }}%"></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2 class="card-label">Bought (30 days)</h2>
-        <p class="card-value">${{ bought30.total_cents|money }}</p>
-        <p class="card-sub">{{ bought30.count }} purchase{{ bought30.count == 1 ? '' : 's' }}</p>
-    </div>
-
-    <div class="card">
-        <h2 class="card-label">Home-made streak</h2>
-        <p class="card-value">{{ streak }} day{{ streak == 1 ? '' : 's' }}</p>
-        <p class="card-sub">{{ home7.count }} cup{{ home7.count == 1 ? '' : 's' }} brewed · ${{ home7.total_cents|money }}</p>
-    </div>
-</section>
-
-<section class="dash-grid">
-    <div class="panel">
-        <div class="panel-head">
-            <h2>Add purchase</h2>
-        </div>
+<details class="add-cup"{% if form_errors %} open{% endif %}>
+    <summary class="btn btn-primary">
+        <span class="btn-hero-plus" aria-hidden="true">+</span> Add a cup
+    </summary>
+    <div class="add-cup-body">
         <form method="post" action="/transactions/add" class="log-form">
-            <label class="field">
+            <label class="field field-grow">
                 <span class="field-label">Merchant</span>
                 <input type="text" name="merchant" list="log-merchants" maxlength="120"
                        value="{{ form_submitted.merchant ?? '' }}" placeholder="Second Cup"
