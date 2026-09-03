@@ -35,9 +35,9 @@ final class RuleFactory
         $name = trim((string) ($post['name'] ?? ''));
         if ($requireName) {
             if ($name === '') {
-                $errors['name'] = 'Name is required.';
+                $errors['name'] = 'Title is required.';
             } elseif (mb_strlen($name) > 120) {
-                $errors['name'] = 'Name must be 120 characters or fewer.';
+                $errors['name'] = 'Title must be 120 characters or fewer.';
             }
         }
 
