@@ -1,5 +1,8 @@
 @echo off
 REM Boots the Grounds for Concern stack: Go rule engine (:8081) + PHP app (:8080).
+REM Resets the database to the seeded demo state first - deterministic 90-day
+REM history, the built-in weekly budget rule (week tuned to $56.50, one latte
+REM under the line), no alerts. Anything from a previous run is wiped.
 REM Run from anywhere; finds its own paths. Close both spawned windows to stop.
 
 setlocal
@@ -17,6 +20,11 @@ if not exist vendor\ (
     echo Installing PHP dependencies ^(Twig, PHPUnit^)...
     "%PHP_CMD%" composer.phar install --no-interaction || exit /b 1
 )
+
+REM Reset to the canonical demo state before booting.
+echo Resetting demo data ...
+"%PHP_CMD%" scripts/migrate.php || exit /b 1
+"%PHP_CMD%" scripts/seed.php || exit /b 1
 
 echo Starting rule engine on http://127.0.0.1:8081 ...
 start "grounds-engine" cmd /c "cd engine && go run .\cmd\grounds-api"

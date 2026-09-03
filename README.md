@@ -59,12 +59,13 @@ cp config.example.php config.php   # then edit the password
 # 3. Install PHP dependencies (Twig, PHPUnit)
 php composer.phar install
 
-# 4. Create tables and seed ~90 days of demo transactions
+# 4. Create tables, seed ~90 days of demo transactions + the built-in rule
 php scripts/migrate.php
 php scripts/seed.php
 
 # 5. Run it
-scripts/start.bat        # Windows: boots both processes and opens the browser
+scripts/start.bat        # Windows: resets to seeded demo data, boots both
+                         # processes and opens the browser
 # or manually:
 go run ./engine/cmd/grounds-api          # rule engine on :8081
 php -S 127.0.0.1:8080 -t public public/index.php   # app on :8080

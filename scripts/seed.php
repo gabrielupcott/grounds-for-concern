@@ -7,10 +7,13 @@
 // Fixed seed (mt_srand 42) => identical data on every run for a given "today".
 // Coffee only: bought (cafés) + home made (cheap). A streak pass guarantees a
 // few home-made days ending today, and the 7-day BOUGHT total is tuned to
-// $56.50 — so the demo rule ("more than $60 on bought coffee within 7 days")
+// $56.50 - so the demo rule ("more than $60 on bought coffee within 7 days")
 // is one latte away from firing.
 //
-// Seeds transactions ONLY. Rules and alerts start empty on purpose.
+// Seeds transactions plus ONE built-in rule: the weekly bought budget the
+// dashboard meter reads its threshold from (rules are data - delete or edit
+// it like any other). Alerts still start empty on purpose: they're earned
+// by live fires.
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
@@ -49,7 +52,7 @@ function pick(array $items): string
     return $items[mt_rand(0, count($items) - 1)];
 }
 
-// Round to the nearest quarter — prices read like real till amounts.
+// Round to the nearest quarter - prices read like real till amounts.
 function cents(int $min, int $max): int
 {
     return (int) (round(mt_rand($min, $max) / 25) * 25);
@@ -204,7 +207,7 @@ function boughtEpisodes(PDO $pdo): array
 $maxEpisodes = 3;
 $guard = 0;
 while (count($episodes = boughtEpisodes($pdo)) > $maxEpisodes && $guard++ < 10) {
-    // Weakest episode first — injected crunch weeks are strong, so organic
+    // Weakest episode first - injected crunch weeks are strong, so organic
     // strays get trimmed before anything the story depends on.
     usort($episodes, fn ($a, $b) => $a['peak'] <=> $b['peak']);
     $weak = $episodes[0];
@@ -213,7 +216,7 @@ while (count($episodes = boughtEpisodes($pdo)) > $maxEpisodes && $guard++ < 10) 
     for ($d = 0; $d < 7; $d++) {
         $window[] = date('Y-m-d', strtotime("{$weak['end']} -$d days"));
     }
-    // Never touch the demo week — the tuner owns it.
+    // Never touch the demo week - the tuner owns it.
     $txns = $pdo->query(
         "SELECT id, amount_cents FROM transactions WHERE category='bought' AND occurred_on < '$windowStart' AND occurred_on IN ('" . implode("','", $window) . "') ORDER BY amount_cents DESC"
     )->fetchAll(PDO::FETCH_ASSOC);
@@ -231,6 +234,22 @@ while (count($episodes = boughtEpisodes($pdo)) > $maxEpisodes && $guard++ < 10) 
     if (!$progress) break; // can't shave further without violating guards
 }
 
+// --- Built-in rule: the weekly bought budget -----------------------------------
+// Dashboard meters draw their line from the user's rules (no rule, no bar),
+// so the demo's flagship budget ships as seeded data.
+
+$weeklyBudget = [
+    'name' => 'Weekly bought budget',
+    'window_days' => 7,
+    'group' => [
+        'match' => 'all',
+        'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'bought']],
+    ],
+    'threshold' => ['metric' => 'total', 'operator' => '>', 'value' => 60],
+];
+$pdo->prepare('INSERT INTO rules (name, definition) VALUES (?, ?)')
+    ->execute([$weeklyBudget['name'], json_encode($weeklyBudget, JSON_THROW_ON_ERROR)]);
+
 $pdo->commit();
 
 // --- Summary -------------------------------------------------------------------
@@ -242,7 +261,7 @@ foreach ($stats as $s) {
     echo sprintf("%-10s %3d rows  $%8.2f\n", $s['category'], $s['n'], $s['total'] / 100);
 }
 
-// Distinct heavy BOUGHT weeks — same convention as the backtest.
+// Distinct heavy BOUGHT weeks - same convention as the backtest.
 echo "heavy bought weeks (would-fire episodes) in history: " . count(boughtEpisodes($pdo)) . "\n";
 
 // Current home-made streak (days in a row: >=1 home made, 0 bought).
@@ -258,4 +277,5 @@ foreach ($days as $d) {
     $streak++;
 }
 echo "home-made streak: $streak days\n";
+echo "built-in rule: Weekly bought budget: spend over \$60 on cafe coffee in 7 days\n";
 echo "seed: ok\n";
