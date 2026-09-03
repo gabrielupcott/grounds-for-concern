@@ -25,6 +25,16 @@ final class RuleFactoryTest extends TestCase
         ];
     }
 
+    public function testEmptyNameAllowedWhenNotRequired(): void
+    {
+        $form = $this->coffeeForm();
+        $form['name'] = '';
+
+        $rule = RuleFactory::fromForm($form, requireName: false);
+        $this->assertSame('', $rule['name']);
+        $this->assertSame('bought', $rule['group']['conditions'][0]['value']);
+    }
+
     public function testBuildsValidRule(): void
     {
         $rule = RuleFactory::fromForm($this->coffeeForm());

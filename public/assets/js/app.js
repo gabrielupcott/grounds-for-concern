@@ -125,6 +125,9 @@
     form.addEventListener('input', schedulePreview);
     form.addEventListener('change', schedulePreview);
 
+    // Populate the sidebar immediately — it shouldn't wait for a click.
+    runPreview();
+
     // ----- backtest -------------------------------------------------------------
 
     backtestBtn.addEventListener('click', async () => {

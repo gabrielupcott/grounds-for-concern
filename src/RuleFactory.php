@@ -22,18 +22,23 @@ final class RuleFactory
     private const THRESHOLD_OPS = ['>', '>='];
 
     /**
+     * @param bool $requireName Save-time validation requires a name; the
+     *                           builder's live preview and backtest don't —
+     *                           the name is metadata, not rule semantics.
      * @return array rule definition
      * @throws RuleValidationException with field-keyed errors
      */
-    public static function fromForm(array $post): array
+    public static function fromForm(array $post, bool $requireName = true): array
     {
         $errors = [];
 
         $name = trim((string) ($post['name'] ?? ''));
-        if ($name === '') {
-            $errors['name'] = 'Name is required.';
-        } elseif (mb_strlen($name) > 120) {
-            $errors['name'] = 'Name must be 120 characters or fewer.';
+        if ($requireName) {
+            if ($name === '') {
+                $errors['name'] = 'Name is required.';
+            } elseif (mb_strlen($name) > 120) {
+                $errors['name'] = 'Name must be 120 characters or fewer.';
+            }
         }
 
         $windowDays = (int) ($post['window_days'] ?? 0);

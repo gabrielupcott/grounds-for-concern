@@ -156,7 +156,10 @@ try {
         case $path === '/rules/preview' && $method === 'POST':
             header('Content-Type: application/json');
             try {
-                $definition = RuleFactory::fromForm($_POST);
+                // No name required: the preview shows what the rule MEANS,
+                // and the engine needs a non-empty one to validate.
+                $definition = RuleFactory::fromForm($_POST, requireName: false);
+                $definition['name'] = $definition['name'] !== '' ? $definition['name'] : 'Preview';
                 $payload = ['ok' => true, 'sentence' => Sentence::render($definition)];
 
                 // Live match count: what the rule sees right now, over its
@@ -199,7 +202,8 @@ try {
         case $path === '/rules/backtest' && $method === 'POST':
             header('Content-Type: application/json');
             try {
-                $definition = RuleFactory::fromForm($_POST);
+                $definition = RuleFactory::fromForm($_POST, requireName: false);
+                $definition['name'] = $definition['name'] !== '' ? $definition['name'] : 'Preview';
                 $today = (new DateTimeImmutable('today'))->format('Y-m-d');
                 $from = (new DateTimeImmutable('89 days ago'))->format('Y-m-d');
                 // Pull enough history to cover the widest window ending at `from`.
