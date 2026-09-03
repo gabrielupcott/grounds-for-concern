@@ -42,10 +42,10 @@ $pdo = new PDO(
 mt_srand(42); // deterministic runs
 
 const DAYS = 90;
-const HOME_BREW = 'Home Brew';
+const HOME_MERCHANT = 'Our Kitchen'; // synthetic "merchant" for home-made cups
 
-// The whole merchant universe — keeps the app's autocomplete short.
-$cafes = ['Tim Hortons', "Paisley's Coffee House", 'Relay Coffee', 'Mulberry Coffeehouse'];
+// The whole merchant universe - keeps the app's autocomplete short.
+$cafes = ['Tim Hortons', 'Paisley Coffeehouse', 'Relay Coffee', 'Mulberry Coffeehouse'];
 
 function pick(array $items): string
 {
@@ -87,7 +87,7 @@ for ($i = -DAYS; $i <= 0; $i++) {
     // Home made: most days, 1-2 cups, a fraction of café prices.
     if (mt_rand(1, 100) <= 55) {
         for ($c = 0, $n = mt_rand(1, 2); $c < $n; $c++) {
-            $insert->execute([$date, HOME_BREW, 'home_made', cents(35, 75)]);
+            $insert->execute([$date, HOME_MERCHANT, 'home_made', cents(35, 75)]);
         }
     }
 }
@@ -113,7 +113,7 @@ for ($i = -2; $i <= 0; $i++) {
     $hasHome = $pdo->prepare("SELECT COUNT(*) FROM transactions WHERE category='home_made' AND occurred_on=?");
     $hasHome->execute([$date]);
     if ((int) $hasHome->fetchColumn() === 0) {
-        $insert->execute([$date, HOME_BREW, 'home_made', cents(35, 75)]);
+        $insert->execute([$date, HOME_MERCHANT, 'home_made', cents(35, 75)]);
     }
 }
 

@@ -40,6 +40,7 @@ $twig = new Environment(new FilesystemLoader(dirname(__DIR__) . '/templates'), [
     'strict_variables' => true,
 ]);
 $twig->addFilter(new TwigFilter('money', fn ($cents) => number_format($cents / 100, 2)));
+$twig->addFilter(new TwigFilter('category_label', fn ($c) => $c === 'bought' ? 'Cafe' : 'Homemade'));
 $twig->addFilter(new TwigFilter('rule_sentence', [Sentence::class, 'render']));
 $twig->addGlobal('unseen_alerts', $alertRepo->countUnseen());
 $twig->addGlobal('active_nav', null);
@@ -326,11 +327,11 @@ try {
             $date = (string) ($_POST['date'] ?? date('Y-m-d'));
 
             // Home made is a checkbox; it fixes both the category and a
-            // sensible merchant. Typing "Home Brew" as the merchant counts too.
-            $isHomeMade = isset($_POST['home_made']) || strcasecmp($merchant, 'Home Brew') === 0;
+            // sensible merchant. Typing "Our Kitchen" as the merchant counts too.
+            $isHomeMade = isset($_POST['home_made']) || strcasecmp($merchant, 'Our Kitchen') === 0;
             $category = $isHomeMade ? 'home_made' : 'bought';
             if ($isHomeMade) {
-                $merchant = 'Home Brew';
+                $merchant = 'Our Kitchen';
             }
 
             if ($merchant === '') {

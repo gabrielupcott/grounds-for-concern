@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 /**
- * Renders a rule definition as one plain-English sentence — the live preview
+ * Renders a rule definition as one plain-English sentence - the live preview
  * in the builder, and the summary stored with alerts.
  *
  * This lives server-side next to the rule itself so the sentence and the JSON
@@ -29,8 +29,8 @@ final class Sentence
         if ($th['metric'] === 'count') {
             $n = number_format($th['value'], 0);
             return $th['operator'] === '>'
-                ? "I make more than {$n} purchases"
-                : "I make at least {$n} purchases";
+                ? "I make more than {$n} cups"
+                : "I make at least {$n} cups";
         }
         $amount = self::amount($th['value']);
         return $th['operator'] === '>'
@@ -51,8 +51,8 @@ final class Sentence
         if ($c['field'] === 'category') {
             // The app's two categories read better with a little help.
             $value = match ($c['value']) {
-                'bought' => 'bought coffee',
-                'home_made' => 'home made',
+                'bought' => 'cafe coffee',
+                'home_made' => 'homemade coffee',
                 default => $c['value'],
             };
         }

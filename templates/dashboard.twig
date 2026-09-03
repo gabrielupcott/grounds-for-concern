@@ -30,9 +30,9 @@
             <label class="check-row">
                 <input type="checkbox" name="home_made" value="1"
                        {{ form_submitted.home_made is defined ? 'checked' }}>
-                <span>Home made</span>
+                <span>Homemade</span>
             </label>
-            <label class="field">
+            <label class="field field-date">
                 <span class="field-label">Date</span>
                 <input type="date" name="date" value="{{ form_submitted.date ?? "now"|date("Y-m-d") }}" max="{{ "now"|date("Y-m-d") }}"
                        class="{{ form_errors.date is defined ? 'input-error' }}">
@@ -92,16 +92,16 @@
         <tr>
             <th>Date</th>
             <th>Merchant</th>
-            <th>Category</th>
-            <th class="num">Amount</th>
+            <th>Source</th>
+            <th class="num">Cost</th>
         </tr>
         </thead>
         <tbody>
         {% for t in recent %}
             <tr>
-                <td class="nowrap">{{ t.occurred_on|date('D M j') }}</td>
+                <td class="nowrap">{{ t.occurred_on|date('D, M j') }}</td>
                 <td>{{ t.merchant }}</td>
-                <td><span class="chip chip-{{ t.category }}">{{ t.category|replace({'_': ' '}) }}</span></td>
+                <td>{{ t.category|category_label }}</td>
                 <td class="num">${{ t.amount_cents|money }}</td>
             </tr>
         {% endfor %}
@@ -109,9 +109,8 @@
     </table>
     {% else %}
     <div class="empty">
-        <p>No purchases yet.</p>
+        <p>No cups yet.</p>
     </div>
     {% endif %}
-    </div>
 </section>
 {% endblock %}

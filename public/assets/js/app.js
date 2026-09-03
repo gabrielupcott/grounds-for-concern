@@ -65,7 +65,7 @@
             for (const c of categories) {
                 const opt = document.createElement('option');
                 opt.value = c;
-                opt.textContent = c.replace(/_/g, ' ');
+                opt.textContent = c === 'bought' ? 'Cafe' : 'Homemade';
                 if (c === value) opt.selected = true;
                 sel.appendChild(opt);
             }
@@ -93,7 +93,7 @@
             if (rowsEl.querySelectorAll('[data-row]').length > 1) {
                 row.remove();
             } else {
-                // Last row: clear instead of removing — a rule needs a condition.
+                // Last row: clear instead of removing - a rule needs a condition.
                 fieldSel.selectedIndex = 0;
                 slot.replaceChildren(valueControl('category'));
                 const op = row.querySelector('.cond-op');
@@ -134,7 +134,7 @@
                 if (data.now) {
                     const n = data.now;
                     const total = n.metric === 'count'
-                        ? n.count + (n.count === 1 ? ' purchase' : ' purchases')
+                        ? n.count + (n.count === 1 ? ' cup' : ' cups')
                         : '$' + (n.total_cents / 100).toFixed(2);
                     const tail = n.triggered ? 'over' : n.gap + ' from firing';
                     nowEl.textContent = 'Current Total: ' + total + ' (' + tail + ')';
@@ -161,7 +161,7 @@
     form.addEventListener('input', schedulePreview);
     form.addEventListener('change', schedulePreview);
 
-    // Populate the sidebar immediately — it shouldn't wait for a click.
+    // Populate the sidebar immediately - it shouldn't wait for a click.
     runPreview();
 
     // ----- backtest -------------------------------------------------------------

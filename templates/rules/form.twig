@@ -1,6 +1,6 @@
 {% extends 'base.twig' %}
 
-{% block title %}{{ rule.id ? 'Edit rule' : 'New rule' }} — Grounds for Concern{% endblock %}
+{% block title %}{{ rule.id ? 'Edit rule' : 'New rule' }} · Grounds for Concern{% endblock %}
 
 {% block content %}
 <div class="panel-head page-head">
@@ -66,7 +66,7 @@
                         {% if c.field == 'category' %}
                             <select name="cond_value[]" class="cond-value" aria-label="Value">
                                 {% for cat in categories %}
-                                    <option value="{{ cat }}" {{ c.value == cat ? 'selected' }}>{{ cat|replace({'_': ' '}) }}</option>
+                                    <option value="{{ cat }}" {{ c.value == cat ? 'selected' }}>{{ cat|category_label }}</option>
                                 {% endfor %}
                             </select>
                         {% else %}
@@ -98,7 +98,7 @@
                     </select>
                     <span class="cond-value-wrap" data-value-slot>
                         <select name="cond_value[]" class="cond-value" aria-label="Value">
-                            {% for cat in categories %}<option value="{{ cat }}">{{ cat|replace({'_': ' '}) }}</option>{% endfor %}
+                            {% for cat in categories %}<option value="{{ cat }}">{{ cat|category_label }}</option>{% endfor %}
                         </select>
                     </span>
                     <button type="button" class="btn btn-quiet cond-remove" data-remove aria-label="Remove condition">&times;</button>
@@ -112,7 +112,7 @@
             <div class="threshold-row">
                 <select name="threshold_metric" aria-label="Metric">
                     <option value="total" {{ (submitted.threshold_metric ?? rule.definition.threshold.metric ?? 'total') == 'total' ? 'selected' }}>spend</option>
-                    <option value="count" {{ (submitted.threshold_metric ?? rule.definition.threshold.metric) == 'count' ? 'selected' }}>purchases</option>
+                    <option value="count" {{ (submitted.threshold_metric ?? rule.definition.threshold.metric) == 'count' ? 'selected' }}>cups</option>
                 </select>
                 <select name="threshold_operator" aria-label="Comparison">
                     <option value=">" {{ (submitted.threshold_operator ?? rule.definition.threshold.operator ?? '>') == '>' ? 'selected' }}>more than</option>

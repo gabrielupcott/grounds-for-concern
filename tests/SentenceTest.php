@@ -23,7 +23,7 @@ final class SentenceTest extends TestCase
     {
         $rule = $this->rule(['group' => ['match' => 'all', 'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'bought']]]]);
         $this->assertSame(
-            'Alert me when I spend more than $60 on bought coffee within any 7 days.',
+            'Alert me when I spend more than $60 on cafe coffee within any 7 days.',
             Sentence::render($rule)
         );
     }
@@ -35,7 +35,7 @@ final class SentenceTest extends TestCase
             'group' => ['match' => 'all', 'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'home_made']]],
         ]);
         $this->assertSame(
-            'Alert me when I spend at least $20 on home made within any 7 days.',
+            'Alert me when I spend at least $20 on homemade coffee within any 7 days.',
             Sentence::render($rule)
         );
     }
@@ -53,7 +53,7 @@ final class SentenceTest extends TestCase
     {
         $rule = $this->rule(['threshold' => ['metric' => 'count', 'operator' => '>=', 'value' => 4]]);
         $this->assertSame(
-            'Alert me when I make at least 4 purchases on coffee within any 7 days.',
+            'Alert me when I make at least 4 cups on coffee within any 7 days.',
             Sentence::render($rule)
         );
     }

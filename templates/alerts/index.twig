@@ -32,7 +32,7 @@
         <p class="alert-summary">{{ a.summary }}</p>
         <p class="alert-numbers">
             <strong>${{ a.window_total_cents|money }}</strong>
-            across {{ a.transaction_count }} purchase{{ a.transaction_count == 1 ? '' : 's' }}
+            across {{ a.transaction_count }} cup{{ a.transaction_count == 1 ? '' : 's' }}
         </p>
     </div>
     {% endfor %}
