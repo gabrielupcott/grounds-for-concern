@@ -35,14 +35,8 @@
                     <strong>{{ r.name }}</strong><br>
                     <span class="sentence">{{ r.definition|rule_sentence }}</span>
                 </td>
-                <td>
-                    {% if r.is_active %}
-                        <span class="chip chip-on">active</span>
-                    {% else %}
-                        <span class="chip">paused</span>
-                    {% endif %}
-                </td>
-                <td class="num">
+                <td>{{ r.is_active ? 'active' : 'paused' }}</td>
+                <td class="actions">
                     <form method="post" action="/rules/{{ r.id }}/toggle" class="inline">
                         <button class="btn btn-quiet" type="submit">{{ r.is_active ? 'Pause' : 'Resume' }}</button>
                     </form>

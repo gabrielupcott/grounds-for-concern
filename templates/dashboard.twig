@@ -1,6 +1,6 @@
 {% extends 'base.twig' %}
 
-{% block title %}Dashboard — Grounds for Concern{% endblock %}
+{% block title %}Dashboard · Grounds for Concern{% endblock %}
 
 {% block content %}
 {% for f in flash %}
@@ -20,7 +20,7 @@
                        class="{{ form_errors.merchant is defined ? 'input-error' }}" required>
                 {% if form_errors.merchant is defined %}<span class="field-error">{{ form_errors.merchant }}</span>{% endif %}
             </label>
-            <label class="field">
+            <label class="field field-amount">
                 <span class="field-label">Amount</span>
                 <input type="text" inputmode="decimal" name="amount"
                        value="{{ form_submitted.amount ?? '' }}" placeholder="4.75"
@@ -38,7 +38,7 @@
                        class="{{ form_errors.date is defined ? 'input-error' }}">
                 {% if form_errors.date is defined %}<span class="field-error">{{ form_errors.date }}</span>{% endif %}
             </label>
-            <button type="submit" class="btn btn-primary log-submit">Add</button>
+            <button type="submit" class="btn btn-primary">Add</button>
         </form>
         <datalist id="log-merchants">
             {% for m in merchants %}<option value="{{ m }}"></option>{% endfor %}
