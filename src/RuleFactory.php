@@ -6,7 +6,7 @@ namespace App;
 
 /**
  * Turns the rule-builder form POST into a rule definition array (the JSON DSL
- * the Go engine consumes) — or rejects it with errors the UI can show
+ * the Go engine consumes) - or rejects it with errors the UI can show
  * field-by-field.
  *
  * The form posts parallel arrays (cond_field[], cond_operator[], cond_value[])
@@ -23,7 +23,7 @@ final class RuleFactory
 
     /**
      * @param bool $requireName Save-time validation requires a name; the
-     *                           builder's live preview and backtest don't —
+     *                           builder's live preview and backtest don't;
      *                           the name is metadata, not rule semantics.
      * @return array rule definition
      * @throws RuleValidationException with field-keyed errors
@@ -134,7 +134,7 @@ final class RuleFactory
     }
 
     /**
-     * The shape the builder opens with — a sensible starting point, not a
+     * The shape the builder opens with - a sensible starting point, not a
      * finished rule (no name, so saving without typing one shows validation).
      */
     public static function defaultDefinition(): array

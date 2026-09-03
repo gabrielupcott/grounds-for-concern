@@ -6,7 +6,7 @@ namespace App\Repositories;
 
 final class TransactionRepository
 {
-    /** The two categories — the app's core axis. */
+    /** The two categories - the app's core axis. */
     public const CATEGORIES = ['home_made', 'bought'];
 
     public function __construct(private \PDO $pdo)
@@ -27,7 +27,7 @@ final class TransactionRepository
 
     /**
      * Total + count for one category since N days ago (inclusive).
-     * Dates are computed in PHP and passed in explicitly — one clock.
+     * Dates are computed in PHP and passed in explicitly - one clock.
      */
     public function categoryStatsSince(string $category, int $days): array
     {
@@ -55,7 +55,7 @@ final class TransactionRepository
     /**
      * Home-made streak: consecutive most-recent days with at least one
      * home-made cup and zero bought coffee. A day with nothing logged
-     * doesn't break the run — it just isn't counted.
+     * doesn't break the run - it just isn't counted.
      */
     public function homeStreak(): int
     {

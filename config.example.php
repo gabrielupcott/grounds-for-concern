@@ -1,7 +1,7 @@
 <?php
 
 // Copy this file to config.php and fill in your local values.
-// config.php is gitignored — real credentials never get committed.
+// config.php is gitignored - real credentials never get committed.
 
 return [
     'db' => [

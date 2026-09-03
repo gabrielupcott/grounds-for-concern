@@ -9,7 +9,7 @@ already over it. There's also a homemade streak, because the cheapest cup
 is the one you brew yourself.
 
 - **PHP + Twig** front end (no framework, plain PDO)
-- **Go** rule engine — a small stateless HTTP service that does evaluation and
+- **Go** rule engine: a small stateless HTTP service that does evaluation and
   backtesting
 - **MySQL** storage; rules are stored as data (JSON), not code
 
@@ -54,7 +54,7 @@ PHP; anywhere `php` runs works.)
 # 1. Create the database and a user (once)
 mysql -u root -p -e "CREATE DATABASE grounds CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER 'grounds'@'localhost' IDENTIFIED BY 'grounds'; GRANT ALL PRIVILEGES ON grounds.* TO 'grounds'@'localhost';"
 
-# 2. Configure (gitignored — never commit real credentials)
+# 2. Configure (gitignored; never commit real credentials)
 cp config.example.php config.php   # then edit the password
 
 # 3. Install PHP dependencies (Twig, PHPUnit)
@@ -74,17 +74,7 @@ php -S 127.0.0.1:8080 -t public public/index.php   # app on :8080
 
 ## How it fits together
 
-```
-Browser ──► PHP app :8080 (front controller + Twig)
-              │  PDO
-              ▼
-            MySQL (transactions / rules / alerts)
-              │  JSON over HTTP
-              ▼
-            Go engine :8081 (stateless: rule + transactions in, verdict out)
-```
-
-PHP owns data and presentation. Go owns the math — it never touches the
+PHP owns data and presentation. Go owns the math: it never touches the
 database, which makes it trivially testable and lets live evaluation and
 backtesting share the exact same code path. Rules are JSON documents built
 from constrained selects, so the UI can't construct logic the engine can't
@@ -111,6 +101,6 @@ with a naive evaluate-every-day replay on generated data.
 ## Deliberate scope
 
 Single user, no auth, no delivery beyond the inbox, one level of condition
-grouping. The point was to finish the core loop — build → preview → backtest
-→ save → fire — rather than sprawl. Nesting condition groups is the obvious
+grouping. The point was to finish the core loop (build → preview → backtest
+→ save → fire) rather than sprawl. Nesting condition groups is the obvious
 next step; the rule JSON is shaped so it's an additive change.
