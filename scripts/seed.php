@@ -32,6 +32,13 @@ $db = $config['db'];
 // system (Eastern) clock. Without this, PHP seeds "tomorrow".
 date_default_timezone_set('America/Toronto');
 
+// Anchor "today" once, up front: a run that crosses midnight mid-seed must
+// not change its mind about which day it is - the main loop, the streak
+// pass, and the tuner all have to agree, or the streak window can end up
+// with bought coffee in it and the tuned week total silently off.
+$today = new DateTimeImmutable('today');
+$day = static fn (int $offset): string => $today->modify(sprintf('%d days', $offset))->format('Y-m-d');
+
 $pdo = new PDO(
     sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $db['host'], $db['port'], $db['name']),
     $db['user'],
@@ -58,11 +65,6 @@ function cents(int $min, int $max): int
     return (int) (round(mt_rand($min, $max) / 25) * 25);
 }
 
-function day(int $offset): string
-{
-    return date('Y-m-d', strtotime("$offset days"));
-}
-
 $pdo->beginTransaction();
 // FK-safe order.
 $pdo->exec('DELETE FROM alerts');
@@ -74,10 +76,10 @@ $insert = $pdo->prepare(
 );
 
 for ($i = -DAYS; $i <= 0; $i++) {
-    $date = day($i);
+    $date = $day($i);
 
     // Bought coffee: 0-3 a day, most days 1-2. Tuned so a normal week sits in
-    // the high $40s — history crosses $60 only on genuinely heavy weeks.
+    // the high $40s - history crosses $60 only on genuinely heavy weeks.
     $r = mt_rand(1, 100);
     $cups = $r <= 26 ? 0 : ($r <= 61 ? 1 : ($r <= 88 ? 2 : 3));
     for ($c = 0; $c < $cups; $c++) {
@@ -96,7 +98,7 @@ for ($i = -DAYS; $i <= 0; $i++) {
 // spaced through history so the backtest has real episodes to find.
 foreach ([-75, -50, -25] as $anchor) {
     for ($d = 0; $d < 4; $d++) {
-        $date = day($anchor + $d);
+        $date = $day($anchor + $d);
         for ($c = 0, $n = mt_rand(2, 3); $c < $n; $c++) {
             $insert->execute([$date, pick($cafes), 'bought', cents(375, 575)]);
         }
@@ -108,7 +110,7 @@ foreach ([-75, -50, -25] as $anchor) {
 // which then fixes the bought week total.)
 
 for ($i = -2; $i <= 0; $i++) {
-    $date = day($i);
+    $date = $day($i);
     $pdo->prepare("DELETE FROM transactions WHERE category='bought' AND occurred_on=?")->execute([$date]);
     $hasHome = $pdo->prepare("SELECT COUNT(*) FROM transactions WHERE category='home_made' AND occurred_on=?");
     $hasHome->execute([$date]);
@@ -121,7 +123,7 @@ for ($i = -2; $i <= 0; $i++) {
 // Distribute the adjustment across recent café purchases (plausible amounts);
 // top up with a fresh purchase today if the window is dry.
 
-$windowStart = day(-6);
+$windowStart = $day(-6);
 $tuneTarget = 5650;
 
 function weekBoughtTotal(PDO $pdo, string $windowStart): int
@@ -157,7 +159,7 @@ if ($delta !== 0) {
                 break;
             }
             // Top up 4 days back: inside the demo week, outside the streak.
-            $insert->execute([day(-3), pick($cafes), 'bought', $take]);
+            $insert->execute([$day(-3), pick($cafes), 'bought', $take]);
             $delta -= $take;
         }
     } else {
