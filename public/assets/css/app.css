@@ -86,12 +86,8 @@ body {
     padding: 0.12rem 0.6rem; border-radius: 999px;
     background: var(--paper); border: 1px solid var(--line); color: var(--ink-soft);
 }
-.chip-coffee { background: #f3e8dd; border-color: #e0c9b4; color: #7c451f; }
-.chip-food { background: #fdeedd; border-color: #f5d5b3; color: #9a5b13; }
-.chip-groceries { background: #e8f0dd; border-color: #cddec0; color: #4c6b34; }
-.chip-transport { background: #e3edf5; border-color: #c7dcea; color: #2f5d84; }
-.chip-entertainment { background: #efe6f5; border-color: #dacdeb; color: #5f3f84; }
-.chip-other { background: #eee; border-color: #ddd; color: #666; }
+.chip-bought { background: #f3e8dd; border-color: #e0c9b4; color: #7c451f; }
+.chip-home_made { background: #e8f0dd; border-color: #cddec0; color: #4c6b34; }
 
 /* Buttons */
 .btn {
@@ -187,6 +183,8 @@ input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); outli
 .dash-grid { display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
 .log-form { display: grid; gap: 0.85rem; }
 .log-submit { justify-self: start; }
+.check-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.95rem; cursor: pointer; }
+.check-row input { accent-color: var(--accent); width: 1.05rem; height: 1.05rem; }
 input[type="date"] { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.65rem; }
 
 /* Alerts */

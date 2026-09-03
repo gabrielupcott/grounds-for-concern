@@ -29,7 +29,7 @@
             for (const c of categories) {
                 const opt = document.createElement('option');
                 opt.value = c;
-                opt.textContent = c;
+                opt.textContent = c.replace(/_/g, ' ');
                 if (c === value) opt.selected = true;
                 sel.appendChild(opt);
             }

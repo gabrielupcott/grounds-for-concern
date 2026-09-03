@@ -47,9 +47,19 @@ final class Sentence
 
     private static function condition(array $c): string
     {
+        $value = $c['value'];
+        if ($c['field'] === 'category') {
+            // The app's two categories read better with a little help.
+            $value = match ($c['value']) {
+                'bought' => 'bought coffee',
+                'home_made' => 'home made',
+                default => $c['value'],
+            };
+        }
+
         return match (true) {
-            $c['field'] === 'category' && $c['operator'] === 'is' => 'on ' . $c['value'],
-            $c['field'] === 'category' && $c['operator'] === 'is_not' => 'on anything but ' . $c['value'],
+            $c['field'] === 'category' && $c['operator'] === 'is' => 'on ' . $value,
+            $c['field'] === 'category' && $c['operator'] === 'is_not' => 'on anything but ' . $value,
             $c['field'] === 'category' && $c['operator'] === 'contains' => 'on categories containing “' . $c['value'] . '”',
             $c['field'] === 'merchant' && $c['operator'] === 'is' => 'at ' . $c['value'],
             $c['field'] === 'merchant' && $c['operator'] === 'is_not' => 'anywhere but ' . $c['value'],

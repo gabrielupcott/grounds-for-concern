@@ -1,26 +1,21 @@
 <?php
 
-// Seed ~90 days of deterministic demo transactions.
+// Seed ~90 days of deterministic coffee spending.
 //
 //   php scripts/seed.php
 //
 // Fixed seed (mt_srand 42) => identical data on every run for a given "today".
-// Coffee is deliberately heavy so the demo rule ("spend over $60 on coffee
-// within 7 days") has history to backtest against, and the current 7-day
-// coffee total is auto-tuned to ~$56.50 — so adding one ~$4.75 latte during
-// the demo tips it over the line.
+// Coffee only: bought (cafés) + home made (cheap). A streak pass guarantees a
+// few home-made days ending today, and the 7-day BOUGHT total is tuned to
+// $56.50 — so the demo rule ("more than $60 on bought coffee within 7 days")
+// is one latte away from firing.
 //
-// Seeds transactions ONLY. Rules and alerts start empty on purpose:
-// the demo builds the rule live, and the app gets to show its empty states.
+// Seeds transactions ONLY. Rules and alerts start empty on purpose.
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
     exit("CLI only\n");
 }
-
-// Pin the clock. XAMPP's php.ini defaults to Europe/Berlin; MySQL uses the
-// system (Eastern) clock. Without this, PHP seeds "tomorrow".
-date_default_timezone_set('America/Toronto');
 
 $root = dirname(__DIR__);
 $configFile = $root . '/config.php';
@@ -29,6 +24,10 @@ if (!file_exists($configFile)) {
 }
 $config = require $configFile;
 $db = $config['db'];
+
+// Pin the clock. XAMPP's php.ini defaults to Europe/Berlin; MySQL uses the
+// system (Eastern) clock. Without this, PHP seeds "tomorrow".
+date_default_timezone_set('America/Toronto');
 
 $pdo = new PDO(
     sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $db['host'], $db['port'], $db['name']),
@@ -40,15 +39,10 @@ $pdo = new PDO(
 mt_srand(42); // deterministic runs
 
 const DAYS = 90;
+const HOME_BREW = 'Home Brew';
 
-$merchants = [
-    'coffee'       => ['Tim Hortons', 'Starbucks', 'Second Cup', 'Williams Coffee Pub'],
-    'food'         => ["McDonald's", 'Subway', "Harvey's", 'Popeyes', 'Ghazali Shawarma'],
-    'groceries'    => ['Fortinos', 'No Frills', 'FreshCo', 'Food Basics'],
-    'transport'    => ['Presto', 'Shell', 'Uber'],
-    'entertainment' => ['Cineplex', 'Steam'],
-    'other'        => ['Amazon', 'Shoppers Drug Mart', 'Dollarama'],
-];
+// The whole merchant universe — keeps the app's autocomplete short.
+$cafes = ['Tim Hortons', "Paisley's Coffee House", 'Relay Coffee', 'Mulberry Coffeehouse'];
 
 function pick(array $items): string
 {
@@ -61,13 +55,9 @@ function cents(int $min, int $max): int
     return (int) (round(mt_rand($min, $max) / 25) * 25);
 }
 
-$insert = $pdo->prepare(
-    'INSERT INTO transactions (occurred_on, merchant, category, amount_cents) VALUES (?, ?, ?, ?)'
-);
-
-function add(PDOStatement $insert, string $date, string $merchant, string $category, int $amount): void
+function day(int $offset): string
 {
-    $insert->execute([$date, $merchant, $category, $amount]);
+    return date('Y-m-d', strtotime("$offset days"));
 }
 
 $pdo->beginTransaction();
@@ -76,81 +66,73 @@ $pdo->exec('DELETE FROM alerts');
 $pdo->exec('DELETE FROM rules');
 $pdo->exec('DELETE FROM transactions');
 
-for ($i = DAYS; $i >= 0; $i--) {
-    $date = date('Y-m-d', strtotime("-$i days"));
+$insert = $pdo->prepare(
+    'INSERT INTO transactions (occurred_on, merchant, category, amount_cents) VALUES (?, ?, ?, ?)'
+);
 
-    // Coffee: 0-3 a day, most days 1-2. Avg lands around $7/day (~$47/week),
-    // so history crosses $60 only on genuinely heavy weeks.
+for ($i = -DAYS; $i <= 0; $i++) {
+    $date = day($i);
+
+    // Bought coffee: 0-3 a day, most days 1-2. Tuned so a normal week sits in
+    // the high $40s — history crosses $60 only on genuinely heavy weeks.
     $r = mt_rand(1, 100);
-    $cups = $r <= 18 ? 0 : ($r <= 54 ? 1 : ($r <= 86 ? 2 : 3));
+    $cups = $r <= 26 ? 0 : ($r <= 61 ? 1 : ($r <= 88 ? 2 : 3));
     for ($c = 0; $c < $cups; $c++) {
-        add($insert, $date, pick($merchants['coffee']), 'coffee', cents(325, 625));
+        $insert->execute([$date, pick($cafes), 'bought', cents(325, 625)]);
     }
 
-    // Food: most days, one meal out.
-    if (mt_rand(1, 100) <= 40) {
-        add($insert, $date, pick($merchants['food']), 'food', cents(850, 2150));
-    }
-
-    // Groceries: ~2 trips a week.
-    if (mt_rand(1, 100) <= 28) {
-        add($insert, $date, pick($merchants['groceries']), 'groceries', cents(2800, 8500));
-    }
-
-    // Transport.
-    if (mt_rand(1, 100) <= 30) {
-        $m = pick($merchants['transport']);
-        $amount = $m === 'Presto' ? (mt_rand(1, 2) * 325)
-            : ($m === 'Shell' ? cents(4200, 6800) : cents(900, 1900));
-        add($insert, $date, $m, 'transport', $amount);
-    }
-
-    // Entertainment (Netflix handled separately — fixed monthly).
-    if (mt_rand(1, 100) <= 12) {
-        $m = pick($merchants['entertainment']);
-        add($insert, $date, $m, 'entertainment', $m === 'Cineplex' ? cents(1400, 1750) : cents(2000, 7900));
-    }
-
-    // Everything else.
-    if (mt_rand(1, 100) <= 25) {
-        add($insert, $date, pick($merchants['other']), 'other', cents(500, 3900));
-    }
-
-    // Netflix on the 1st of each month.
-    if (date('j', strtotime($date)) === '1') {
-        add($insert, $date, 'Netflix', 'entertainment', 1699);
-    }
-}
-
-// A few deliberately heavy coffee stretches (crunch weeks, long shifts) —
-// spaced through history so the backtest has real episodes to find.
-foreach ([-75, -50, -25] as $anchor) {
-    for ($d = 0; $d < 4; $d++) {
-        $date = date('Y-m-d', strtotime("{$anchor} days +{$d} days"));
-        for ($c = 0; $c < mt_rand(2, 3); $c++) {
-            add($insert, $date, pick($merchants['coffee']), 'coffee', cents(375, 575));
+    // Home made: most days, 1-2 cups, a fraction of café prices.
+    if (mt_rand(1, 100) <= 55) {
+        for ($c = 0, $n = mt_rand(1, 2); $c < $n; $c++) {
+            $insert->execute([$date, HOME_BREW, 'home_made', cents(35, 75)]);
         }
     }
 }
 
-// --- Demo tuning: make the current 7-day coffee total land at ~$56.50 -------
-// so one more latte crosses the $60 demo threshold. Distribute the adjustment
-// across the most recent coffee purchases (keep amounts plausible), and top
-// up with a fresh purchase today if the window is unusually dry.
-
-$windowStart = date('Y-m-d', strtotime('-6 days'));
-$tuneTarget = 5650;
-
-function weekCoffeeTotal(PDO $pdo, string $windowStart): int
-{
-    return (int) $pdo->query("SELECT SUM(amount_cents) FROM transactions WHERE category='coffee' AND occurred_on >= '$windowStart'")->fetchColumn();
+// A few deliberately heavy café stretches (crunch weeks, long shifts),
+// spaced through history so the backtest has real episodes to find.
+foreach ([-75, -50, -25] as $anchor) {
+    for ($d = 0; $d < 4; $d++) {
+        $date = day($anchor + $d);
+        for ($c = 0, $n = mt_rand(2, 3); $c < $n; $c++) {
+            $insert->execute([$date, pick($cafes), 'bought', cents(375, 575)]);
+        }
+    }
 }
 
-$delta = $tuneTarget - weekCoffeeTotal($pdo, $windowStart);
+// --- Streak pass: last 3 days are home-made-only ------------------------------
+// No bought coffee, at least one home made each day. (Runs before the tuner,
+// which then fixes the bought week total.)
+
+for ($i = -2; $i <= 0; $i++) {
+    $date = day($i);
+    $pdo->prepare("DELETE FROM transactions WHERE category='bought' AND occurred_on=?")->execute([$date]);
+    $hasHome = $pdo->prepare("SELECT COUNT(*) FROM transactions WHERE category='home_made' AND occurred_on=?");
+    $hasHome->execute([$date]);
+    if ((int) $hasHome->fetchColumn() === 0) {
+        $insert->execute([$date, HOME_BREW, 'home_made', cents(35, 75)]);
+    }
+}
+
+// --- Demo tuning: 7-day bought total lands at exactly $56.50 -------------------
+// Distribute the adjustment across recent café purchases (plausible amounts);
+// top up with a fresh purchase today if the window is dry.
+
+$windowStart = day(-6);
+$tuneTarget = 5650;
+
+function weekBoughtTotal(PDO $pdo, string $windowStart): int
+{
+    return (int) $pdo->query(
+        "SELECT SUM(amount_cents) FROM transactions WHERE category='bought' AND occurred_on >= '$windowStart'"
+    )->fetchColumn();
+}
+
+$delta = $tuneTarget - weekBoughtTotal($pdo, $windowStart);
 
 if ($delta !== 0) {
     $recent = $pdo->query(
-        "SELECT id, amount_cents FROM transactions WHERE category='coffee' AND occurred_on >= '$windowStart' ORDER BY occurred_on DESC, id DESC"
+        "SELECT id, amount_cents FROM transactions WHERE category='bought' AND occurred_on >= '$windowStart' ORDER BY occurred_on DESC, id DESC"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     if ($delta > 0) {
@@ -163,7 +145,6 @@ if ($delta !== 0) {
                 $delta -= $take;
             }
         }
-        // Still short? A coffee run today covers the rest.
         while ($delta > 0) {
             $take = min($delta, 575);
             if ($take < 250) {
@@ -172,7 +153,8 @@ if ($delta !== 0) {
                 $delta = 0;
                 break;
             }
-            add($insert, date('Y-m-d'), pick($merchants['coffee']), 'coffee', $take);
+            // Top up 4 days back: inside the demo week, outside the streak.
+            $insert->execute([day(-3), pick($cafes), 'bought', $take]);
             $delta -= $take;
         }
     } else {
@@ -188,42 +170,92 @@ if ($delta !== 0) {
     }
 }
 
-$weekTotal = weekCoffeeTotal($pdo, $windowStart);
-echo "current 7-day coffee total: " . sprintf('$%.2f', $weekTotal / 100) . ($weekTotal === $tuneTarget ? " (tuned)" : " (untuned)") . "\n";
+$weekTotal = weekBoughtTotal($pdo, $windowStart);
+echo 'current 7-day bought total: ' . sprintf('$%.2f', $weekTotal / 100) . ($weekTotal === $tuneTarget ? " (tuned)\n" : " (untuned)\n");
+
+// --- Episode trim: history should show exactly 3 heavy weeks (the injected
+// crunch weeks). If an organic week also crosses $60, shave the weakest
+// excess episode back under the line so the backtest tells a clean story.
+
+function boughtEpisodes(PDO $pdo): array
+{
+    $rows = $pdo->query("SELECT id, occurred_on, amount_cents FROM transactions WHERE category='bought' ORDER BY occurred_on")->fetchAll(PDO::FETCH_ASSOC);
+    $byDay = [];
+    foreach ($rows as $t) {
+        $byDay[$t['occurred_on']] = ($byDay[$t['occurred_on']] ?? 0) + (int) $t['amount_cents'];
+    }
+    $episodes = [];
+    $firingYesterday = false;
+    foreach ($rows as $t) {
+        $end = $t['occurred_on'];
+        $sum = 0;
+        for ($d = 0; $d < 7; $d++) {
+            $sum += $byDay[date('Y-m-d', strtotime("$end -$d days"))] ?? 0;
+        }
+        $firingToday = $sum > 6000;
+        if ($firingToday && !$firingYesterday) {
+            $episodes[] = ['end' => $end, 'peak' => $sum];
+        }
+        $firingYesterday = $firingToday;
+    }
+    return $episodes;
+}
+
+$maxEpisodes = 3;
+$guard = 0;
+while (count($episodes = boughtEpisodes($pdo)) > $maxEpisodes && $guard++ < 10) {
+    // Weakest episode first — injected crunch weeks are strong, so organic
+    // strays get trimmed before anything the story depends on.
+    usort($episodes, fn ($a, $b) => $a['peak'] <=> $b['peak']);
+    $weak = $episodes[0];
+    $excess = $weak['peak'] - 6000 + 25; // under the line, with margin
+    $window = [];
+    for ($d = 0; $d < 7; $d++) {
+        $window[] = date('Y-m-d', strtotime("{$weak['end']} -$d days"));
+    }
+    // Never touch the demo week — the tuner owns it.
+    $txns = $pdo->query(
+        "SELECT id, amount_cents FROM transactions WHERE category='bought' AND occurred_on < '$windowStart' AND occurred_on IN ('" . implode("','", $window) . "') ORDER BY amount_cents DESC"
+    )->fetchAll(PDO::FETCH_ASSOC);
+    $progress = false;
+    foreach ($txns as $t) {
+        if ($excess <= 0) break;
+        $shave = min($t['amount_cents'] - 250, $excess); // keep amounts plausible
+        if ($shave > 0) {
+            $pdo->prepare('UPDATE transactions SET amount_cents = ? WHERE id = ?')
+                ->execute([$t['amount_cents'] - $shave, $t['id']]);
+            $excess -= $shave;
+            $progress = true;
+        }
+    }
+    if (!$progress) break; // can't shave further without violating guards
+}
 
 $pdo->commit();
 
-// --- Summary -----------------------------------------------------------------
+// --- Summary -------------------------------------------------------------------
 
 $stats = $pdo->query(
     'SELECT category, COUNT(*) AS n, SUM(amount_cents) AS total FROM transactions GROUP BY category'
 )->fetchAll(PDO::FETCH_ASSOC);
 foreach ($stats as $s) {
-    echo sprintf("%-13s %3d rows  $%8.2f\n", $s['category'], $s['n'], $s['total'] / 100);
+    echo sprintf("%-10s %3d rows  $%8.2f\n", $s['category'], $s['n'], $s['total'] / 100);
 }
 
-// How many distinct "heavy coffee weeks" are in the seeded history?
-// (Consecutive over-threshold window-days collapse into one episode — the
-// same convention the backtest uses, so the numbers match the UI.)
-$coffee = $pdo->query("SELECT occurred_on, amount_cents FROM transactions WHERE category='coffee' ORDER BY occurred_on")->fetchAll(PDO::FETCH_ASSOC);
-$byDay = [];
-foreach ($coffee as $t) {
-    $byDay[$t['occurred_on']] = ($byDay[$t['occurred_on']] ?? 0) + (int) $t['amount_cents'];
+// Distinct heavy BOUGHT weeks — same convention as the backtest.
+echo "heavy bought weeks (would-fire episodes) in history: " . count(boughtEpisodes($pdo)) . "\n";
+
+// Current home-made streak (days in a row: >=1 home made, 0 bought).
+$days = $pdo->query(
+    "SELECT occurred_on,
+            MAX(category='bought') AS had_bought,
+            MAX(category='home_made') AS had_home
+     FROM transactions GROUP BY occurred_on ORDER BY occurred_on DESC LIMIT 60"
+)->fetchAll(PDO::FETCH_ASSOC);
+$streak = 0;
+foreach ($days as $d) {
+    if ($d['had_bought'] || !$d['had_home']) break;
+    $streak++;
 }
-$episodes = 0;
-$firingYesterday = false;
-foreach ($coffee as $t) {
-    $end = $t['occurred_on'];
-    $sum = 0;
-    for ($d = 0; $d < 7; $d++) {
-        $day = date('Y-m-d', strtotime("$end -$d days"));
-        $sum += $byDay[$day] ?? 0;
-    }
-    $firingToday = $sum > 6000;
-    if ($firingToday && !$firingYesterday) {
-        $episodes++;
-    }
-    $firingYesterday = $firingToday;
-}
-echo "heavy coffee weeks (would-fire episodes) in history: $episodes\n";
+echo "home-made streak: $streak days\n";
 echo "seed: ok\n";

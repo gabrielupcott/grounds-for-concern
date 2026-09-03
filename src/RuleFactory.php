@@ -16,6 +16,7 @@ final class RuleFactory
 {
     public const WINDOWS = [1, 3, 7, 14, 30];
     private const FIELDS = ['category', 'merchant'];
+    private const CATEGORY_VALUES = ['home_made', 'bought'];
     private const OPERATORS = ['is', 'is_not', 'contains'];
     private const METRICS = ['total', 'count'];
     private const THRESHOLD_OPS = ['>', '>='];
@@ -77,6 +78,10 @@ final class RuleFactory
                 $errors["cond_$i"] = 'Value must be 120 characters or fewer.';
                 continue;
             }
+            if ($field === 'category' && !in_array($value, self::CATEGORY_VALUES, true)) {
+                $errors["cond_$i"] = 'Category must be home made or bought.';
+                continue;
+            }
             $conditions[] = ['field' => $field, 'operator' => $operator, 'value' => $value];
         }
 
@@ -134,7 +139,7 @@ final class RuleFactory
             'window_days' => 7,
             'group' => [
                 'match' => 'all',
-                'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'coffee']],
+                'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'bought']],
             ],
             'threshold' => ['metric' => 'total', 'operator' => '>', 'value' => 60],
         ];

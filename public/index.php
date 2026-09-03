@@ -59,11 +59,11 @@ try {
             echo $twig->render('dashboard.twig', [
                 'active_nav' => 'dashboard',
                 'recent' => $txns->recent(15),
-                'coffee7' => $txns->categoryStatsSince('coffee', 6), // 6 days ago + today = 7 days
-                'coffee30' => $txns->categoryStatsSince('coffee', 29),
-                'weekTotal' => $txns->totalSince(6),
+                'bought7' => $txns->categoryStatsSince('bought', 6), // 6 days ago + today = 7 days
+                'bought30' => $txns->categoryStatsSince('bought', 29),
+                'home7' => $txns->categoryStatsSince('home_made', 6),
+                'streak' => $txns->homeStreak(),
                 'merchants' => $txns->distinctMerchants(),
-                'categories' => TransactionRepository::CATEGORIES,
                 'flash' => $_SESSION['flash'] ?? [],
                 'form_errors' => [],
                 'form_submitted' => [],
@@ -225,8 +225,15 @@ try {
             $merchant = trim((string) ($_POST['merchant'] ?? ''));
             $amountRaw = str_replace(['$', ','], '', (string) ($_POST['amount'] ?? ''));
             $amount = $amountRaw === '' ? 0.0 : round((float) $amountRaw, 2);
-            $category = (string) ($_POST['category'] ?? '');
             $date = (string) ($_POST['date'] ?? date('Y-m-d'));
+
+            // Home made is a checkbox; it fixes both the category and a
+            // sensible merchant. Typing "Home Brew" as the merchant counts too.
+            $isHomeMade = isset($_POST['home_made']) || strcasecmp($merchant, 'Home Brew') === 0;
+            $category = $isHomeMade ? 'home_made' : 'bought';
+            if ($isHomeMade) {
+                $merchant = 'Home Brew';
+            }
 
             if ($merchant === '') {
                 $errors['merchant'] = 'Merchant is required.';
@@ -237,9 +244,6 @@ try {
                 $errors['amount'] = 'Amount must be greater than zero.';
             } elseif ($amount > 10000) {
                 $errors['amount'] = 'Amount is too large.';
-            }
-            if (!in_array($category, TransactionRepository::CATEGORIES, true)) {
-                $errors['category'] = 'Select a category.';
             }
             // The "!" resets unparsed components to zero — without it,
             // createFromFormat fills the time with *now*, and today reads as
@@ -259,11 +263,11 @@ try {
                 echo $twig->render('dashboard.twig', [
                     'active_nav' => 'dashboard',
                     'recent' => $txns->recent(15),
-                    'coffee7' => $txns->categoryStatsSince('coffee', 6),
-                    'coffee30' => $txns->categoryStatsSince('coffee', 29),
-                    'weekTotal' => $txns->totalSince(6),
+                    'bought7' => $txns->categoryStatsSince('bought', 6),
+                    'bought30' => $txns->categoryStatsSince('bought', 29),
+                    'home7' => $txns->categoryStatsSince('home_made', 6),
+                    'streak' => $txns->homeStreak(),
                     'merchants' => $txns->distinctMerchants(),
-                    'categories' => TransactionRepository::CATEGORIES,
                     'flash' => $_SESSION['flash'] ?? [],
                     'form_errors' => $errors,
                     'form_submitted' => $_POST,

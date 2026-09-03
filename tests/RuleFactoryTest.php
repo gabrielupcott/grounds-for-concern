@@ -18,7 +18,7 @@ final class RuleFactoryTest extends TestCase
             'group_match' => 'all',
             'cond_field' => ['category'],
             'cond_operator' => ['is'],
-            'cond_value' => ['coffee'],
+            'cond_value' => ['bought'],
             'threshold_metric' => 'total',
             'threshold_operator' => '>',
             'threshold_value' => '60',
@@ -32,7 +32,7 @@ final class RuleFactoryTest extends TestCase
         $this->assertSame('Coffee budget', $rule['name']);
         $this->assertSame(7, $rule['window_days']);
         $this->assertSame('all', $rule['group']['match']);
-        $this->assertSame([['field' => 'category', 'operator' => 'is', 'value' => 'coffee']], $rule['group']['conditions']);
+        $this->assertSame([['field' => 'category', 'operator' => 'is', 'value' => 'bought']], $rule['group']['conditions']);
         $this->assertSame(['metric' => 'total', 'operator' => '>', 'value' => 60.0], $rule['threshold']);
     }
 
@@ -67,6 +67,7 @@ final class RuleFactoryTest extends TestCase
         yield 'bad condition field' => [['cond_field' => ['amount'], 'cond_operator' => ['is'], 'cond_value' => ['5']], 'cond_0'];
         yield 'bad condition operator' => [['cond_field' => ['category'], 'cond_operator' => ['like'], 'cond_value' => ['coffee']], 'cond_0'];
         yield 'empty condition value' => [['cond_field' => ['merchant'], 'cond_operator' => ['is'], 'cond_value' => [' ']], 'cond_0'];
+        yield 'bad category value' => [['cond_field' => ['category'], 'cond_operator' => ['is'], 'cond_value' => ['coffee']], 'cond_0'];
         yield 'bad metric' => [['threshold_metric' => 'average'], 'threshold_metric'];
         yield 'bad threshold operator' => [['threshold_operator' => '<'], 'threshold_operator'];
         yield 'zero threshold' => [['threshold_value' => '0'], 'threshold_value'];

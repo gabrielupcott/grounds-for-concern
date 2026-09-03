@@ -1,9 +1,11 @@
 # Grounds for Concern
 
-A small self-hosted budget watcher. Define rules like *"alert me when I spend
-more than $60 on coffee within any 7 days"*, and the app watches your
-transaction feed and fires an alert the moment a new purchase pushes you over
-the line.
+A small self-hosted budget watcher for one habit: coffee. Purchases are
+split **home made** vs **bought**, you define rules like *"alert me when I
+spend more than $60 on bought coffee within any 7 days"*, and the app
+watches your feed and fires an alert the moment a new purchase pushes you
+over the line. There's also a home-made streak, because the cheapest cup
+is the one you brew yourself.
 
 - **PHP + Twig** front end (no framework, plain PDO)
 - **Go** rule engine — a small stateless HTTP service that does evaluation and
@@ -24,11 +26,16 @@ So the rule builder has three things you won't usually find:
 3. A **backtest** — "this rule would have fired 3 times in the last 90 days,
    here are the dates" — so you trust it before you save it.
 
+Rules can watch the category (home made / bought), the merchant, or both —
+so a café budget can exclude home brew, or count it. The streak card tracks
+consecutive days with at least one home-made cup and zero bought coffee.
+
 ## Try it
 
-1. Log a `$4.75` coffee on the dashboard. Watch the weekly meter.
+1. Log a `$4.75` bought coffee on the dashboard. Watch the weekly meter and
+   the home-made streak.
 2. Build the rule above (the builder starts you close to it). Watch the
-   preview sentence change as you click. Run the backtest.
+   preview sentence and live count change as you click. Run the backtest.
 3. Save it, then log one more coffee. The rule fires, and the alert lands in
    the inbox with the exact window: how much, across how many purchases.
 

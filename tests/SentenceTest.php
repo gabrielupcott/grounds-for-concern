@@ -21,9 +21,22 @@ final class SentenceTest extends TestCase
 
     public function testDemoSentence(): void
     {
+        $rule = $this->rule(['group' => ['match' => 'all', 'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'bought']]]]);
         $this->assertSame(
-            'Alert me when I spend more than $60 on coffee within any 7 days.',
-            Sentence::render($this->rule())
+            'Alert me when I spend more than $60 on bought coffee within any 7 days.',
+            Sentence::render($rule)
+        );
+    }
+
+    public function testHomeMadePhrasing(): void
+    {
+        $rule = $this->rule([
+            'threshold' => ['metric' => 'total', 'operator' => '>=', 'value' => 20],
+            'group' => ['match' => 'all', 'conditions' => [['field' => 'category', 'operator' => 'is', 'value' => 'home_made']]],
+        ]);
+        $this->assertSame(
+            'Alert me when I spend at least $20 on home made within any 7 days.',
+            Sentence::render($rule)
         );
     }
 

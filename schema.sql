@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     occurred_on DATE NOT NULL,
     merchant    VARCHAR(120) NOT NULL,
-    category    ENUM('coffee','food','groceries','transport','entertainment','other') NOT NULL,
+    category    ENUM('home_made','bought') NOT NULL,
     amount_cents INT NOT NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_transactions_date (occurred_on),

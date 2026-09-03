@@ -66,12 +66,12 @@
                         {% if c.field == 'category' %}
                             <select name="cond_value[]" class="cond-value" aria-label="Value">
                                 {% for cat in categories %}
-                                    <option value="{{ cat }}" {{ c.value == cat ? 'selected' }}>{{ cat }}</option>
+                                    <option value="{{ cat }}" {{ c.value == cat ? 'selected' }}>{{ cat|replace({'_': ' '}) }}</option>
                                 {% endfor %}
                             </select>
                         {% else %}
                             <input type="text" name="cond_value[]" class="cond-value" list="merchant-names"
-                                   value="{{ c.value }}" placeholder="Starbucks" aria-label="Value">
+                                   value="{{ c.value }}" placeholder="Relay Coffee" aria-label="Value">
                         {% endif %}
                     </span>
                     <button type="button" class="btn btn-quiet cond-remove" data-remove aria-label="Remove condition">&times;</button>
@@ -98,7 +98,7 @@
                     </select>
                     <span class="cond-value-wrap" data-value-slot>
                         <select name="cond_value[]" class="cond-value" aria-label="Value">
-                            {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+                            {% for cat in categories %}<option value="{{ cat }}">{{ cat|replace({'_': ' '}) }}</option>{% endfor %}
                         </select>
                     </span>
                     <button type="button" class="btn btn-quiet cond-remove" data-remove aria-label="Remove condition">&times;</button>

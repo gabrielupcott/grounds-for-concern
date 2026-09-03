@@ -6,8 +6,8 @@ namespace App\Repositories;
 
 final class TransactionRepository
 {
-    /** Must match the ENUM in schema.sql. */
-    public const CATEGORIES = ['coffee', 'food', 'groceries', 'transport', 'entertainment', 'other'];
+    /** The two categories — the app's core axis. */
+    public const CATEGORIES = ['home_made', 'bought'];
 
     public function __construct(private \PDO $pdo)
     {
@@ -50,6 +50,33 @@ final class TransactionRepository
         );
         $stmt->execute([$since]);
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Home-made streak: consecutive most-recent days with at least one
+     * home-made cup and zero bought coffee. A day with nothing logged
+     * doesn't break the run — it just isn't counted.
+     */
+    public function homeStreak(): int
+    {
+        $rows = $this->pdo->query(
+            'SELECT occurred_on,
+                    MAX(category = \'bought\') AS had_bought,
+                    MAX(category = \'home_made\') AS had_home
+             FROM transactions
+             GROUP BY occurred_on
+             ORDER BY occurred_on DESC
+             LIMIT 120'
+        )->fetchAll();
+
+        $streak = 0;
+        foreach ($rows as $r) {
+            if ($r['had_bought'] || !$r['had_home']) {
+                break;
+            }
+            $streak++;
+        }
+        return $streak;
     }
 
     /** All transactions since a date, shaped for the Go engine. */

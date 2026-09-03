@@ -9,25 +9,26 @@
 
 <section class="card-row">
     <div class="card">
-        <h2 class="card-label">Coffee (7 days)</h2>
-        <p class="card-value">${{ coffee7.total_cents|money }}</p>
-        <p class="card-sub">{{ coffee7.count }} purchase{{ coffee7.count == 1 ? '' : 's' }}</p>
+        <h2 class="card-label">Bought (7 days)</h2>
+        <p class="card-value">${{ bought7.total_cents|money }}</p>
+        <p class="card-sub">{{ bought7.count }} purchase{{ bought7.count == 1 ? '' : 's' }}</p>
         <div class="meter" role="img"
-             aria-label="Coffee spend at {{ (coffee7.total_cents / 6000 * 100)|round }} percent of a $60 weekly budget">
-            <div class="meter-fill {% if coffee7.total_cents > 6000 %}is-over{% endif %}"
-                 style="width: {{ min(coffee7.total_cents / 6000 * 100, 100) }}%"></div>
+             aria-label="Bought coffee at {{ (bought7.total_cents / 6000 * 100)|round }} percent of a $60 weekly budget">
+            <div class="meter-fill {% if bought7.total_cents > 6000 %}is-over{% endif %}"
+                 style="width: {{ min(bought7.total_cents / 6000 * 100, 100) }}%"></div>
         </div>
     </div>
 
     <div class="card">
-        <h2 class="card-label">Coffee (30 days)</h2>
-        <p class="card-value">${{ coffee30.total_cents|money }}</p>
-        <p class="card-sub">{{ coffee30.count }} purchase{{ coffee30.count == 1 ? '' : 's' }}</p>
+        <h2 class="card-label">Bought (30 days)</h2>
+        <p class="card-value">${{ bought30.total_cents|money }}</p>
+        <p class="card-sub">{{ bought30.count }} purchase{{ bought30.count == 1 ? '' : 's' }}</p>
     </div>
 
     <div class="card">
-        <h2 class="card-label">Spending (7 days)</h2>
-        <p class="card-value">${{ weekTotal|money }}</p>
+        <h2 class="card-label">Home-made streak</h2>
+        <p class="card-value">{{ streak }} day{{ streak == 1 ? '' : 's' }}</p>
+        <p class="card-sub">{{ home7.count }} cup{{ home7.count == 1 ? '' : 's' }} brewed · ${{ home7.total_cents|money }}</p>
     </div>
 </section>
 
@@ -51,14 +52,10 @@
                        class="{{ form_errors.amount is defined ? 'input-error' }}" required>
                 {% if form_errors.amount is defined %}<span class="field-error">{{ form_errors.amount }}</span>{% endif %}
             </label>
-            <label class="field">
-                <span class="field-label">Category</span>
-                <select name="category" class="{{ form_errors.category is defined ? 'input-error' }}">
-                    {% for c in categories %}
-                        <option value="{{ c }}" {{ (form_submitted.category ?? 'coffee') == c ? 'selected' }}>{{ c }}</option>
-                    {% endfor %}
-                </select>
-                {% if form_errors.category is defined %}<span class="field-error">{{ form_errors.category }}</span>{% endif %}
+            <label class="check-row">
+                <input type="checkbox" name="home_made" value="1"
+                       {{ form_submitted.home_made is defined ? 'checked' }}>
+                <span>Home made</span>
             </label>
             <label class="field">
                 <span class="field-label">Date</span>
@@ -94,7 +91,7 @@
             <tr>
                 <td class="nowrap">{{ t.occurred_on|date('D M j') }}</td>
                 <td>{{ t.merchant }}</td>
-                <td><span class="chip chip-{{ t.category }}">{{ t.category }}</span></td>
+                <td><span class="chip chip-{{ t.category }}">{{ t.category|replace({'_': ' '}) }}</span></td>
                 <td class="num">${{ t.amount_cents|money }}</td>
             </tr>
         {% endfor %}
