@@ -153,13 +153,10 @@ input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); outli
 
 .builder-side { position: sticky; top: 1.25rem; }
 .builder-side .panel { margin-bottom: 1.25rem; }
-.builder-side .panel h2 { margin: 0 0 0.7rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; }
-
-.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.builder-side .panel h2 { margin: 0 0 0.7rem; font-size: 1.05rem; }
 
 .preview-sentence { font-size: 1.05rem; line-height: 1.5; margin: 0; min-height: 4.5rem; }
-.preview-now { margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.preview-now { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .preview-now.is-over { color: var(--amber); font-weight: 600; }
 .preview-errors { margin: 0.6rem 0 0; padding-left: 1.1rem; color: var(--amber); font-size: 0.88rem; }
 

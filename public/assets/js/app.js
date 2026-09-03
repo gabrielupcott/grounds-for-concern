@@ -97,10 +97,11 @@
                 errorsEl.replaceChildren();
                 if (data.now) {
                     const n = data.now;
-                    let line = 'Now: $' + (n.total_cents / 100).toFixed(2) + ' · ' +
-                        n.count + (n.count === 1 ? ' purchase' : ' purchases');
-                    line += n.triggered ? ' · over' : (n.gap ? ' · ' + n.gap + ' from firing' : '');
-                    nowEl.textContent = line;
+                    const total = n.metric === 'count'
+                        ? n.count + (n.count === 1 ? ' purchase' : ' purchases')
+                        : '$' + (n.total_cents / 100).toFixed(2);
+                    const tail = n.triggered ? 'over' : n.gap + ' from firing';
+                    nowEl.textContent = 'Current Total: ' + total + ' (' + tail + ')';
                     nowEl.classList.toggle('is-over', n.triggered);
                     nowEl.hidden = false;
                 } else {

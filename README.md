@@ -21,7 +21,7 @@ So the rule builder has three things you won't usually find:
 
 1. A **plain-English preview** that rewrites itself as you build the rule.
 2. A **live match count** — as you build, the sidebar shows what the rule sees
-   right now ("$56.50 across 11 purchases, $3.50 from firing") against your
+   right now ("Current Total: $56.50 ($3.50 from firing)") against your
    real data.
 3. A **backtest** — "this rule would have fired 3 times in the last 90 days,
    here are the dates" — so you trust it before you save it.

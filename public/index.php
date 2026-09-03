@@ -175,12 +175,12 @@ try {
                             $gapCents = max((int) round($definition['threshold']['value'] * 100) - (int) $verdict['window_total_cents'], 0);
                             $gap = '$' . number_format($gapCents / 100, 2);
                         } else {
-                            $gapN = max((int) ceil($definition['threshold']['value']) - (int) $verdict['transaction_count'], 0);
-                            $gap = $gapN . ' purchase' . ($gapN === 1 ? '' : 's');
+                            $gap = (string) max((int) ceil($definition['threshold']['value']) - (int) $verdict['transaction_count'], 0);
                         }
                     }
 
                     $payload['now'] = [
+                        'metric' => $definition['threshold']['metric'],
                         'total_cents' => (int) $verdict['window_total_cents'],
                         'count' => (int) $verdict['transaction_count'],
                         'triggered' => (bool) $verdict['triggered'],
