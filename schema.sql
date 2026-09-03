@@ -1,4 +1,4 @@
--- Grounds for Concern — schema
+-- Grounds for Concern - schema
 -- Money is stored as integer cents. Rules are stored as JSON documents.
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     transaction_count  INT UNSIGNED NOT NULL,
     summary            VARCHAR(255) NOT NULL,
     seen               TINYINT(1) NOT NULL DEFAULT 0,
+    dismissed          TINYINT(1) NOT NULL DEFAULT 0,
     created_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_alerts_rule FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE,
     -- One alert per rule per day: even if the app evaluates twice, the inbox can't spam.

@@ -395,6 +395,11 @@ try {
             header('Location: /alerts');
             break;
 
+        case (bool) preg_match('#^/alerts/(\d+)/dismiss$#', $path, $m) && $method === 'POST':
+            $alertRepo->dismiss((int) $m[1]);
+            header('Location: /alerts');
+            break;
+
         default:
             http_response_code(404);
             echo $twig->render('404.twig');

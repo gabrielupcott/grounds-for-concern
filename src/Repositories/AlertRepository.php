@@ -12,16 +12,18 @@ final class AlertRepository
 
     public function countUnseen(): int
     {
-        return (int) $this->pdo->query('SELECT COUNT(*) FROM alerts WHERE seen = 0')->fetchColumn();
+        return (int) $this->pdo->query('SELECT COUNT(*) FROM alerts WHERE seen = 0 AND dismissed = 0')->fetchColumn();
     }
 
-    /** Latest alerts, newest first, with their rule names. */
+    /** Latest alerts, newest first, with their rule names. Dismissed alerts
+     *  leave the inbox but keep their (rule_id, day) slot - see dismiss(). */
     public function recent(int $limit = 50): array
     {
         $stmt = $this->pdo->prepare(
             'SELECT a.id, a.rule_id, a.triggered_on, a.window_total_cents, a.transaction_count, a.summary, a.seen,
                     r.name AS rule_name
              FROM alerts a JOIN rules r ON r.id = a.rule_id
+             WHERE a.dismissed = 0
              ORDER BY a.triggered_on DESC, a.id DESC LIMIT ?'
         );
         $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
@@ -31,7 +33,7 @@ final class AlertRepository
 
     /**
      * Insert an alert unless one already exists for this rule + day.
-     * The UNIQUE (rule_id, triggered_on) constraint is the real guard —
+     * The UNIQUE (rule_id, triggered_on) constraint is the real guard:
      * evaluating twice can't spam the inbox.
      */
     public function insertIgnore(int $ruleId, string $triggeredOn, int $totalCents, int $count, string $summary): bool
@@ -52,5 +54,15 @@ final class AlertRepository
     public function markAllSeen(): void
     {
         $this->pdo->exec('UPDATE alerts SET seen = 1 WHERE seen = 0');
+    }
+
+    /**
+     * Dismiss an alert: out of the inbox, seen, and (because the row stays)
+     * still holding its UNIQUE (rule_id, triggered_on) slot. A dismissed
+     * alert can't come back to life or re-fire later the same day.
+     */
+    public function dismiss(int $id): void
+    {
+        $this->pdo->prepare('UPDATE alerts SET dismissed = 1, seen = 1 WHERE id = ?')->execute([$id]);
     }
 }

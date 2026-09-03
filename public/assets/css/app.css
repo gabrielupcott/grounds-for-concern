@@ -225,6 +225,11 @@ input[type="date"] { font: inherit; color: var(--ink); background: var(--card); 
 .alert-card { padding: 1rem 1.25rem; }
 .alert-card.is-new { border-color: #f3d68a; background: #fffdf7; }
 .alert-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.alert-head-right { display: flex; align-items: center; gap: 0.5rem; }
+.alert-dismiss {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; width: 2rem; height: 2rem; font-size: 1.15rem; line-height: 1;
+}
 .alert-date { color: var(--ink-soft); font-size: 0.88rem; white-space: nowrap; }
 .alert-summary { margin: 0.55rem 0 0.2rem; color: var(--ink-soft); font-size: 0.95rem; }
 .alert-numbers { margin: 0; }

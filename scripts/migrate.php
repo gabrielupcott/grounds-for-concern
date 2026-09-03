@@ -42,6 +42,17 @@ foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
     }
 }
 
+// Column-level migrations for existing installs: schema.sql creates missing
+// tables, but can't evolve existing ones.
+$columns = $pdo->query(
+    "SELECT COLUMN_NAME FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'alerts'"
+)->fetchAll(PDO::FETCH_COLUMN);
+if (!in_array('dismissed', $columns, true)) {
+    $pdo->exec('ALTER TABLE alerts ADD COLUMN dismissed TINYINT(1) NOT NULL DEFAULT 0 AFTER seen');
+    echo "alerts: added dismissed column\n";
+}
+
 foreach (['transactions', 'rules', 'alerts'] as $table) {
     $count = $pdo->query("SELECT COUNT(*) FROM $table")->fetchColumn();
     echo sprintf("%-13s %d rows\n", $table, $count);
